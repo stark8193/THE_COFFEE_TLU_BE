@@ -9,6 +9,9 @@ flask-sqlalchemy = "*"
 flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
 pymysql = "*"
+flask-jwt-extended = "*"
+passlib = "*"
+redis = "*"
 
 [dev-packages]
 

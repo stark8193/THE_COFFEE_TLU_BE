@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.models import Product
+from app.models import Product1
 from app.schemas import ProductSchema
 from app import db
 #Bước 3
@@ -16,7 +16,7 @@ def add_product():
     price = data.get('price')
     qty = data.get('qty')
 
-    new_product = Product(name=name, description=description, price=price, qty=qty)
+    new_product = Product1(name=name, description=description, price=price, qty=qty)
 
     db.session.add(new_product)
     db.session.commit()
@@ -25,18 +25,18 @@ def add_product():
 
 @product_bp.route('/product', methods=['GET'])
 def get_products():
-    all_products = Product.query.all()
+    all_products = Product1.query.all()
     result = products_schema.dump(all_products)
     return jsonify(result)
 
 @product_bp.route('/product/<int:id>', methods=['GET'])
 def get_product(id):
-    product = Product.query.get_or_404(id)
+    product = Product1.query.get_or_404(id)
     return product_schema.jsonify(product)
 
 @product_bp.route('/product/<int:id>', methods=['PUT'])
 def update_product(id):
-    product = Product.query.get_or_404(id)
+    product = Product1.query.get_or_404(id)
 
     data = request.get_json()
     product.name = data.get('name', product.name)
@@ -50,7 +50,7 @@ def update_product(id):
 
 @product_bp.route('/product/<int:id>', methods=['DELETE'])
 def delete_product(id):
-    product = Product.query.get_or_404(id)
+    product = Product1.query.get_or_404(id)
     db.session.delete(product)
     db.session.commit()
 
