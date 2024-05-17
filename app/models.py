@@ -1,4 +1,5 @@
 from app import db
+import datetime
 
 # Bước 1: Định nghĩa model Menu
 class Menu(db.Model):

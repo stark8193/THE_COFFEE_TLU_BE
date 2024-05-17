@@ -15,3 +15,4 @@ class ProductSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model= Product
 
+
