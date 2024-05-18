@@ -37,7 +37,8 @@ app.register_blueprint(auth_bp, url_prefix='/api/auth')
 from app.routes.productRoutes import product_bp  # Import the blueprint
 app.register_blueprint(product_bp, url_prefix='/api')  # Optionally specify a URL prefix
 
-
+from app.routes.typeNewsRoutes import typenews_bp  # Import the blueprint
+app.register_blueprint(typenews_bp, url_prefix='/api')  # Optionally specify a URL prefix
 
 
 from app import routes  # Import routes after registering blueprints

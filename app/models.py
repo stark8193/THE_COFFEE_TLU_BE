@@ -29,4 +29,7 @@ class User(db.Model):
     role = db.Column(db.String(20), default='user', nullable=False) 
 
 
-    
+class typenews(db.Model):
+    TypeNews_ID = db.Column(db.Integer, primary_key = True)
+    TypeNews_Name = db.Column(db.String(100), nullable=False)
+
