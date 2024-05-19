@@ -82,8 +82,8 @@ def update_typenews(id):
 def delete_typenews(id):
     check = db.session.query(typenews.TypeNews_ID).filter_by(TypeNews_ID=id).first() is not None
     if check:
-        TypeNews = typenews.query.get_or_404(id)
-        db.session.delete(TypeNews)
+        product = typenews.query.get_or_404(id)
+        db.session.delete(product)
         db.session.commit()
         return{
                 'message': 'Da xoa ban ghi',

@@ -1,5 +1,5 @@
 from app import ma
-from app.models import Product1, User, typenews
+from app.models import Product1, User, typenews, news
 
 
 # Bước 2
@@ -12,3 +12,6 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 class TypeNewsSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model= typenews
+class NewsSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = news

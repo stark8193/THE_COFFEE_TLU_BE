@@ -33,3 +33,18 @@ class typenews(db.Model):
     TypeNews_ID = db.Column(db.Integer, primary_key = True)
     TypeNews_Name = db.Column(db.String(100), nullable=False)
 
+class news(db.Model):
+    News_ID = db.Column(db.String(300), primary_key = True)
+    News_Title = db.Column(db.String(100))
+    News_Image = db.Column(db.String(300))
+    News_Description = db.Column(db.Text)
+    News_Content = db.Column(db.Text)
+    News_Time = db.Column(db.String(100), default='default_time_value')
+    TypeNews_ID = db.Column(db.String(300), db.ForeignKey('typenews.TypeNews_ID'), nullable=False)
+
+
+
+
+
+
+
