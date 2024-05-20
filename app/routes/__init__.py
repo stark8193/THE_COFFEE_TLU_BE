@@ -6,6 +6,7 @@ product_bp = Blueprint('products', __name__)
 topping_bp = Blueprint('topppings', __name__)
 auth_bp = Blueprint('auths', __name__)
 product_topping_bp = Blueprint('product_toppings', __name__)
+
 #Bước 4
 
 from app.routes import productRoutes  # Import routes module

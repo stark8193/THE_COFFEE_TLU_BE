@@ -19,9 +19,13 @@ class ToppingSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model= Topping
 
-
-
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
 
+class TypeNewsSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model= typenews
+class NewsSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = news

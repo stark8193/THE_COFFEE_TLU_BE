@@ -44,9 +44,12 @@ app.register_blueprint(menu_bp, url_prefix='/api')
 app.register_blueprint(typeProduct_bp, url_prefix='/api')
 
 app.register_blueprint( product_topping_bp , url_prefix='/api')
-  # Optionally specify a URL prefix
 
+from app.routes.typeNewsRoutes import typenews_bp  # Import the blueprint
+app.register_blueprint(typenews_bp, url_prefix='/api')  # Optionally specify a URL prefix
 
+from app.routes.newsRoute import news_bp  # Import the blueprint
+app.register_blueprint(news_bp, url_prefix='/api')  # Optionally specify a URL prefix
 
 from app import routes  # Import routes after registering blueprints
 from app.models import TokenBlocklist
