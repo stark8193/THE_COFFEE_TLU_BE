@@ -1,30 +1,54 @@
 from app import db
+import uuid
 import datetime
 
 # Bước 1: Định nghĩa model Menu
 class Menu(db.Model):
     __tablename__ = 'Menu'  # Xác định tên bảng một cách rõ ràng
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    type_products = db.relationship('TypeProduct', backref='Menu', lazy=True)
+    Menu_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
+    Name_Menu = db.Column(db.Text, unique=True, nullable=False)
+    type_products = db.relationship('typeproduct', backref='Menu', lazy=True)
 
-
-# Bước 2: Định nghĩa model TypeProduct
-class TypeProduct(db.Model):
-    __tablename__ = 'TypeProduct'  # Xác định tên bảng một cách rõ ràng
+class TokenBlocklist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    image = db.Column(db.String(100), unique=True, nullable=False)
-    menu_id = db.Column(db.Integer, db.ForeignKey('Menu.id'), nullable=False)
-    products = db.relationship('Product', backref='TypeProduct', lazy=True)
+    jti = db.Column(db.String(36), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False)
+class typeproduct(db.Model):
+    __tablename__ = 'typeproduct'  # Xác định tên bảng một cách rõ ràng
+    TypeProduct_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
+    TypeProduct_Name = db.Column(db.String(100), unique=True, nullable=False)
+    TypeProduct_Img = db.Column(db.String(100), unique=True, nullable=False)
+    Menu_ID = db.Column(db.String(100), db.ForeignKey('Menu.Menu_ID'), nullable=False)
+    products = db.relationship('product', backref='typeproduct', lazy=True)
 
-# Bước 3: Định nghĩa model Product
-class Product(db.Model):
-    __tablename__ = 'Product'
+Product_Topping = db.Table(
+    "Product_Topping",
+    db.Column('idProduct', db.String(100), db.ForeignKey('product.idProduct'),primary_key=True),
+    db.Column('Topping_ID', db.String(100), db.ForeignKey('Topping.Topping_ID'), primary_key=True)
+)
+
+class product(db.Model):
+    __tablename__ = 'product'
+    idProduct = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
+    Product_Name = db.Column(db.String(100), unique=True, nullable=False)
+    Product_Image = db.Column(db.String(100), unique=True, nullable=False)
+    Product_Price = db.Column(db.Float, nullable=False)
+    Product_Description = db.Column(db.String(1000))
+    TypeProduct_ID = db.Column(db.String(100), db.ForeignKey('typeproduct.TypeProduct_ID'), nullable=False)
+    toppings = db.relationship("Topping", secondary=Product_Topping, back_populates="products")
+
+class Topping(db.Model):
+    __tablename__ = 'Topping'  # Xác định tên bảng một cách rõ ràng
+    Topping_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
+    Topping_Name = db.Column(db.String(100), unique=True, nullable=False)
+    Topping_Price = db.Column(db.Float, nullable=False)
+    products = db.relationship("product", secondary=Product_Topping, back_populates="toppings")
+
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    image = db.Column(db.String(100), unique=True, nullable=False)
-    description = db.Column(db.String(200))
-    price = db.Column(db.Float, nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    type_product_id = db.Column(db.Integer, db.ForeignKey('TypeProduct.id'), nullable=False)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.Text(), nullable=False)
+    address = db.Column(db.Text(), nullable=False)
+    phoneNumber = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(20), default='user', nullable=False) 

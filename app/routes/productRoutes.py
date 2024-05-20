@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from app.models import Product
-from app.models import TypeProduct
+from app.models import product
+from app.models import typeproduct
 from app.schemas import ProductSchema
 from app import db
 #Bước 3
@@ -12,44 +12,65 @@ products_schema = ProductSchema(many=True)
 @product_bp.route('/product', methods=['POST'])
 def add_product():
     data = request.get_json()
-    name = data.get('name')
-    image = data.get('image')
-    description = data.get('description')
-    price = data.get('price')
-    quantity = data.get('quantity')
-    type_product_id = data.get('type_product_id')
+    name = data.get('Product_Name')
+    image = data.get('Product_Image')
+    price = data.get('Product_Price')
+    description = data.get('Product_Description')
+    type_product_id = data.get('TypeProduct_ID')
+    if name and image and price and type_product_id:
+        check_type_product_id = db.session.query(typeproduct.TypeProduct_ID).filter_by(TypeProduct_ID=type_product_id).first() is not None
+        check_name = db.session.query(product.Product_Name).filter_by(Product_Name=name).first() is None
+        check_image = db.session.query(product.Product_Image).filter_by(Product_Image=image).first() is None
 
-    check_type_product_id = db.session.query(TypeProduct.id).filter_by(id=type_product_id).first() is not None
-    check_name = db.session.query(Product.name).filter_by(name=name).first() is None
-    check_image = db.session.query(Product.image).filter_by(image=image).first() is None
-
-    if check_type_product_id and check_name and check_image:
-        print('check_menu_id:',check_type_product_id)
-        print('check_name:',check_name)
-        new_product = Product(name=name, image=image, description=description
-                              ,price=price,quantity=quantity, type_product_id=type_product_id)
-        db.session.add(new_product)
-        db.session.commit()
-        return product_schema.jsonify(new_product), 200  # Return with HTTP status 201 for created
+        if check_type_product_id and check_name and check_image:
+            print('check_menu_id:',check_type_product_id)
+            print('check_name:',check_name)
+            try:
+                new_product = product(Product_Name=name, Product_Image=image,Product_Price=price
+                                    , Product_Description=description
+                                    , TypeProduct_ID=type_product_id)
+                db.session.add(new_product)
+                db.session.commit()
+                return product_schema.jsonify(new_product), 200  # Return with HTTP status 201 for created
+            except:
+                return {
+                    'Error': 'ERR',
+                },404
+        else:
+            return {
+                    'message': "Trùng tên hoặc link ảnh, hoặc ko tồn tại trong TypeProduct",
+                    'status': 400,
+                    'Error': 'ERR',
+                }, 400
     else:
         return {
-                'message': "Trùng tên hoặc link ảnh, hoặc ko tồn tại trong TypeProduct",
-                'status': 400,
-                'Error': 'ERR',
-            }, 400
+                    'message': "Nhập thiếu dữ liệu",
+                    'status': 400,
+                    'Error': 'ERR',
+                }, 400
 
 @product_bp.route('/product', methods=['GET'])
 def get_products():
-    all_products = Product.query.all()
-    result = products_schema.dump(all_products)
-    return jsonify(result), 200
+    try:
+        all_products = product.query.all()
+        result = products_schema.dump(all_products)
+        return jsonify(result), 200
+    except:
+        return {
+            'Error': 'ERR',
+        },404
 
-@product_bp.route('/product/<int:id>', methods=['GET'])
+@product_bp.route('/product/<string:id>', methods=['GET'])
 def get_product(id):
-    check = db.session.query(Product.id).filter_by(id=id).first() is not None
+    check = db.session.query(product.idProduct).filter_by(idProduct=id).first() is not None
     if check:
-        product = Product.query.get_or_404(id)
-        return product_schema.jsonify(product),200
+        try: 
+            product_get_by_id = product.query.get_or_404(id)
+            return product_schema.jsonify(product_get_by_id),200
+        except:
+            return {
+                'Error': 'ERR',
+            },404
     else:
         return {
                 'message': "KO tìm thấy bản ghi",
@@ -57,31 +78,46 @@ def get_product(id):
                 'Error': 'ERR',
             }, 400
     
-@product_bp.route('/product/<int:id>', methods=['PUT'])
+@product_bp.route('/product/<string:id>', methods=['PUT'])
 def update_product(id):
-    check = db.session.query(Product.id).filter_by(id=id).first() is not None
+    check = db.session.query(product.idProduct).filter_by(idProduct=id).first() is not None
     if check:
-        product = Product.query.get_or_404(id)
-        data = request.get_json()
-        check_type_product_id = db.session.query(TypeProduct.id).filter_by(id=data.get('type_product_id')).first() is not None
-        check_name = db.session.query(Product.name).filter_by(name=data.get('name')).first() is None
-        check_image = db.session.query(Product.image).filter_by(image=data.get('image')).first() is None
-        if check_name and check_image and check_type_product_id:
-            product.name = data.get('name')
-            product.image = data.get('image')
-            product.description = data.get('description')
-            product.price = data.get('price')
-            product.quantity = data.get('quantity')
-            product.type_product_id = data.get('type_product_id')
-            db.session.commit()
-            return product_schema.jsonify(product),200
-        else:
+        try:
+            product_update = product.query.get_or_404(id)
+            data = request.get_json()
+            name = data.get('Product_Name')
+            image = data.get('Product_Image')
+            price = data.get('Product_Price')
+            description = data.get('Product_Description')
+            type_product_id = data.get('TypeProduct_ID')
+            if name and image and price and type_product_id: 
+                check_type_product_id = db.session.query(typeproduct.TypeProduct_ID).filter_by(TypeProduct_ID=type_product_id).first() is not None
+                check_name = db.session.query(product.Product_Name).filter_by(Product_Name=name).first() is None
+                check_image = db.session.query(product.Product_Image).filter_by(Product_Image=image).first() is None
+                if check_type_product_id and check_name and check_image:
+                    product_update.Product_Name = name
+                    product_update.Product_Image = image
+                    product_update.Product_Price = price
+                    product_update.Product_Description = description
+                    product_update.TypeProduct_ID = type_product_id
+                    db.session.commit()
+                    return product_schema.jsonify(product_update),200
+                else:
+                    return {
+                        'message': "Trùng tên hoặc link ảnh, hoặc ko tồn tại trong TypeProduct",
+                        'status': 400,
+                        'Error': 'ERR',
+                    }, 400
+            else:
+                return {
+                            'message': "Nhập thiếu dữ liệu",
+                            'status': 400,
+                            'Error': 'ERR',
+                        }, 400
+        except:
             return {
-                'message': "Trùng tên hoặc link ảnh, hoặc ko tồn tại trong TypeProduct",
-                'status': 400,
                 'Error': 'ERR',
-            }, 400
-
+            },404
     else:
         return {
                 'message': "KO tìm thấy bản ghi",
@@ -89,18 +125,23 @@ def update_product(id):
                 'Error': 'ERR',
             }, 400
 
-@product_bp.route('/product/<int:id>', methods=['DELETE'])
+@product_bp.route('/product/<string:id>', methods=['DELETE'])
 def delete_product(id):
-    check = db.session.query(Product.id).filter_by(id=id).first() is not None
+    check = db.session.query(product.idProduct).filter_by(idProduct=id).first() is not None
     if check:
         print('check:',check)
-        product = Product.query.get_or_404(id)
-        db.session.delete(product)
-        db.session.commit()
-        return{
-                'message': 'Da xoa ban ghi',
-                'status': 200,
-            }, 200  # Return with HTTP status 204 for no content
+        try:
+            product_delete = product.query.get_or_404(id)
+            db.session.delete(product_delete)
+            db.session.commit()
+            return{
+                    'message': 'Da xoa ban ghi',
+                    'status': 200,
+                }, 200  # Return with HTTP status 204 for no content
+        except:
+            return {
+                'Error': 'ERR',
+            },404
     else:
         return {
                 'message': "KO tim thay ban ghi",

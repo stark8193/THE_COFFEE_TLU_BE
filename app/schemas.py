@@ -9,10 +9,19 @@ class MenuSchema(ma.SQLAlchemyAutoSchema):
 
 class TypeProductSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = TypeProduct
+        model = typeproduct
 
 class ProductSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model= Product
+        model= product
 
+class ToppingSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model= Topping
+
+
+
+class UserSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = User
 

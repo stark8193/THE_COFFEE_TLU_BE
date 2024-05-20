@@ -11,59 +11,56 @@ menus_schema = MenuSchema(many=True)
 @menu_bp.route('/menu', methods=['POST'])
 def add_product():
     data = request.get_json()
-    name = data.get('name')
-    check = db.session.query(Menu.name).filter_by(name=name).first() is None
-    if check:
-        print('check:',check)
-        new_menu = Menu(name=name)
-        db.session.add(new_menu)
-        db.session.commit()
-        return menu_schema.jsonify(new_menu), 200  # Return with HTTP status 201 for created
+    name = data.get('Name_Menu')
+    if name:
+        print('name:',name)
+        check = db.session.query(Menu.Name_Menu).filter_by(Name_Menu=name).first() is None
+        if check:
+            print('check:',check)
+            try: 
+                new_menu = Menu(Name_Menu=name)
+                db.session.add(new_menu)
+                db.session.commit()
+                return menu_schema.jsonify(new_menu), 200  # Return with HTTP status 201 for created
+            except:
+                return {
+                    'Error': 'ERR',
+                },404
+        else:
+            return {
+                    'message': "Bản ghi đã tồn tại",
+                    'status': 400,
+                    'Error': 'ERR',
+                }, 400
     else:
         return {
-                'message': "ban ghi da ton tai",
-                'status': 400,
-                'Error': 'ERR',
-            }, 400
-
+                    'message': "Nhập thiếu dữ liệu",
+                    'status': 400,
+                    'Error': 'ERR',
+                }, 400
 
 @menu_bp.route('/menu', methods=['GET'])
 def get_menus():
-    all_menus = Menu.query.all()
-    result = menus_schema.dump(all_menus)
-    return jsonify(result),200
+    try:
+        all_menus = Menu.query.all()
+        result = menus_schema.dump(all_menus)
+        return jsonify(result),200
+    except:
+        return {
+            'Error': 'ERR',
+        },404
 
-@menu_bp.route('/menu/<int:id>', methods=['GET'])
+@menu_bp.route('/menu/<string:id>', methods=['GET'])
 def get_menu(id):
-    check = db.session.query(Menu.id).filter_by(id=id).first() is not None
+    check = db.session.query(Menu.Menu_ID).filter_by(Menu_ID = id).first() is not None
     if check:
-        menu = Menu.query.get_or_404(id)
-        return menu_schema.jsonify(menu),200
-    else:
-        return {
-                'message': "KO tim thay ban ghi",
-                'status': 400,
-                'Error': 'ERR',
-            }, 400
-
-@menu_bp.route('/menu/<int:id>', methods=['PUT'])
-def update_menu(id):
-    check_id = db.session.query(Menu.id).filter_by(id=id).first() is not None
-    if check_id:
-        menu = Menu.query.get_or_404(id)
-        data = request.get_json()
-        check_name = db.session.query(Menu.name).filter_by(name=data.get('name')).first() is None
-        if check_name:
-            menu.name = data.get('name')
-            db.session.commit()
+        try: 
+            menu = Menu.query.get_or_404(id)
             return menu_schema.jsonify(menu),200
-        else:
+        except:
             return {
-                'message': "trung ten ban ghi",
-                'status': 400,
                 'Error': 'ERR',
-            }, 400
-
+            },404
     else:
         return {
                 'message': "KO tim thay ban ghi",
@@ -71,21 +68,64 @@ def update_menu(id):
                 'Error': 'ERR',
             }, 400
 
-@menu_bp.route('/menu/<int:id>', methods=['DELETE'])
+@menu_bp.route('/menu/<string:id>', methods=['PUT'])
+def update_menu(id):
+    check_id = db.session.query(Menu.Menu_ID).filter_by(Menu_ID=id).first() is not None
+    if check_id:
+        print("check_id:",check_id)
+        try: 
+            menu = Menu.query.get_or_404(id)
+            data = request.get_json()
+            name=data.get('Name_Menu')
+            if name:
+                check_name = db.session.query(Menu.Name_Menu).filter_by(Name_Menu=name).first() is None
+                if check_name:
+                    menu.Name_Menu = name
+                    db.session.commit()
+                    return menu_schema.jsonify(menu),200
+                else:
+                    return {
+                        'message': "trung ten ban ghi",
+                        'status': 400,
+                        'Error': 'ERR',
+                    }, 400
+            else:
+                return {
+                            'message': "Nhập thiếu dữ liệu",
+                            'status': 400,
+                            'Error': 'ERR',
+                        }, 400
+        except:
+            return {
+                'Error': 'ERR',
+            },404
+    else:
+        return {
+                'message': "KO tim thay ban ghi",
+                'status': 400,
+                'Error': 'ERR',
+            }, 400
+
+@menu_bp.route('/menu/<string:id>', methods=['DELETE'])
 def delete_menu(id):
-    check = db.session.query(Menu.id).filter_by(id=id).first() is not None
+    check = db.session.query(Menu.Menu_ID).filter_by(Menu_ID=id).first() is not None
     if check:
         print('check:',check)
-        menu = Menu.query.get_or_404(id)
-        db.session.delete(menu)
-        db.session.commit()
-        return{
-                'message': 'Da xoa ban ghi',
-                'status': 200,
-            }, 200  # Return with HTTP status 204 for no content
+        try:
+            menu = Menu.query.get_or_404(id)
+            db.session.delete(menu)
+            db.session.commit()
+            return{
+                    'message': 'Đã xóa bản ghi',
+                    'status': 200,
+                }, 200  # Return with HTTP status 204 for no content
+        except:
+            return {
+                'Error': 'ERR',
+            },404
     else:
         return {
-                'message': "KO tim thay ban ghi",
+                'message': "KO tìm thấy bản ghi",
                 'status': 400,
                 'Error': 'ERR',
             }, 400
