@@ -3,9 +3,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from datetime import timedelta
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
-
+from flask_cors import CORS
+import os   
 ACCESS_EXPIRES = timedelta(hours=1)
 app = Flask(__name__)
+CORS(app)
+
+@app.route("/")
+def helloWorld():
+  return "Hello, cross-origin-world!"
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://u6wubyjmpuwxjtxy:4aEirCKkYb5RiSkH3vvq@b4atx5d13zgsvnoce0cy-mysql.services.clever-cloud.com/b4atx5d13zgsvnoce0cy'
 app.config['JWT_SECRET_KEY'] = 'fgsdf4gdfg'
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = ACCESS_EXPIRES
@@ -36,12 +43,13 @@ from app.routes.userRoutes import auth_bp
 from app.routes.productRoutes import product_bp
 from app.routes.toppingRoutes import topping_bp 
 from app.routes.product_toppingRoutes import product_topping_bp 
-
+from app.routes.uploadRoutes import upload_bp
 app.register_blueprint(product_bp, url_prefix='/api')
 app.register_blueprint(topping_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api/auth') # Import the blueprint  
 app.register_blueprint(menu_bp, url_prefix='/api')
 app.register_blueprint(typeProduct_bp, url_prefix='/api')
+app.register_blueprint(upload_bp, url_prefix='/api')
 
 app.register_blueprint( product_topping_bp , url_prefix='/api')
 

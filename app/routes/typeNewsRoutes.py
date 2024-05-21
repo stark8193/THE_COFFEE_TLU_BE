@@ -9,7 +9,7 @@ typenews_bp = Blueprint('typenews_bp', __name__)
 typenews_schema = TypeNewsSchema()
 typenewses_schema = TypeNewsSchema(many=True)
 
-@typenews_bp .route('/typenews', methods=['POST'])
+@typenews_bp.route('/typenews', methods=['POST'])
 def add_product():
     data = request.get_json()
     TypeNews_Name = data.get('TypeNews_Name')
@@ -37,7 +37,7 @@ def add_product():
 def get_typeNewses():
     all_typeNewses = typenews.query.all()
     result = typenewses_schema.dump(all_typeNewses)
-    return jsonify(result), 200
+    return jsonify({"data":result}), 200
 
 @typenews_bp.route('/typenews/<int:id>', methods=['GET'])
 def get_typenews(id):

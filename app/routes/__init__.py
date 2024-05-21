@@ -9,9 +9,6 @@ product_topping_bp = Blueprint('product_toppings', __name__)
 
 #Bước 4
 
-from app.routes import productRoutes  # Import routes module
-from app.routes import menuRoutes
-from app.routes import typeProductRoutes
-from app.routes import toppingRoutes
-from app.routes import product_toppingRoutes
+from app.routes import *  # Import routes module
+
 # from app.routes import productRoutes, userRoutes  # Import routes module

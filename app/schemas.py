@@ -14,6 +14,7 @@ class TypeProductSchema(ma.SQLAlchemyAutoSchema):
 class ProductSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model= product
+    TypeProduct_ID = ma.auto_field()
 
 class ToppingSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -29,3 +30,4 @@ class TypeNewsSchema(ma.SQLAlchemyAutoSchema):
 class NewsSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = news
+    TypeNews_ID = ma.auto_field()
