@@ -36,36 +36,3 @@ def add_product_topping():
     return jsonify({'message': 'Liên kết sản phẩm và topping đã được tạo thành công'}), 201
 
 
-# def add_topping_to_product(id):
-#     data = request.get_json()
-#     topping_id = data.get('Topping_ID')
-#     if topping_id and id:
-#         check_product_id = db.session.query(product.idProduct).filter_by(idProduct=id).first() is not None 
-#         check_topping_id = db.session.query(Topping.Topping_ID).filter_by(Topping_ID=topping_id).first() is not None 
-#         products = db.session.query(product.idProduct).filter_by(idProduct=id).first()
-#         # print('product_topping:',products)             
-#         if check_product_id and check_topping_id:
-#             try:
-#                 products.toppings.append(topping_id)
-#                 db.session.commit()
-#                 return {
-#                     'message': 'Topping added to product successfully',
-#                     'status': 200
-#                 }, 200
-#             except Exception as e:
-#                 db.session.rollback()
-#                 return {
-#                     'message': 'Failed to add topping to product',
-#                     'error': str(e),
-#                     'status': 500
-#                 }, 500
-#         else:
-#             return {
-#                 'message': 'Product or Topping ko tìm thấy',
-#                 'status': 404
-#             }, 404
-#     else:
-#         return {
-#             'message': 'Thiếu product ID or topping ID',
-#             'status': 400
-#         }, 400

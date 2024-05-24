@@ -36,6 +36,7 @@ class product(db.Model):
     Product_Description = db.Column(db.String(1000))
     TypeProduct_ID = db.Column(db.String(100), db.ForeignKey('typeproduct.TypeProduct_ID'), nullable=False)
     toppings = db.relationship("Topping", secondary=Product_Topping, back_populates="products")
+    order_details = db.relationship('Order_Detail', backref='product', lazy=True)
 
 class Topping(db.Model):
     __tablename__ = 'Topping'  # Xác định tên bảng một cách rõ ràng
@@ -44,15 +45,41 @@ class Topping(db.Model):
     Topping_Price = db.Column(db.Float, nullable=False)
     products = db.relationship("product", secondary=Product_Topping, back_populates="toppings")
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.Text(), nullable=False)
-    address = db.Column(db.Text(), nullable=False)
-    phoneNumber = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(20), default='user', nullable=False) 
 
+class User(db.Model):
+    __tablename__ = 'User'
+    User_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
+    User_Name = db.Column(db.String(100), unique=True, nullable=False)
+    User_Password = db.Column(db.String(100), nullable=False)
+    User_Email = db.Column(db.Text(), nullable=False) 
+    User_Address = db.Column(db.Text(), nullable=False)
+    User_PhoneNumber = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(20), default='User', nullable=False) 
+    users = db.relationship('Order', backref='User', lazy=True)
+
+class Order(db.Model):
+    __tablename__ = 'Order'
+    Order_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
+    Order_Date = db.Column(db.DateTime, default= datetime.datetime.utcnow)
+    Order_Status = db.Column(db.String(100), nullable=False)
+    User_ID = db.Column(db.String(100), db.ForeignKey('User.User_ID'), nullable=False)
+    order_details = db.relationship('Order_Detail', backref='Order', lazy=True)
+
+class Order_Detail(db.Model):
+    __tablename__ = 'Order_Detail'
+    Order_Detail_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
+    Order_Quantity = db.Column(db.Integer, nullable=False)
+    Order_ID = db.Column(db.String(100), db.ForeignKey('Order.Order_ID'), nullable=False)
+    idProduct = db.Column(db.String(100), db.ForeignKey('product.idProduct'), nullable=False)
+    topping_additions = db.relationship('Topping_Addition', backref='Order_Detail', lazy=True)
+
+class Topping_Addition(db.Model):
+    __tablename__ = 'Topping_Addition'
+    Topping_Addition_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
+    Topping_Addition_Name = db.Column(db.String(100),unique=True, nullable=False)
+    Topping_Addition_Price = db.Column(db.Integer, nullable=False)
+    Order_Detail_ID = db.Column(db.String(100), db.ForeignKey('Order_Detail.Order_Detail_ID'), nullable=False)
+    
 class typenews(db.Model):
     TypeNews_ID = db.Column(db.Integer, primary_key = True)
     TypeNews_Name = db.Column(db.String(100), nullable=False)
