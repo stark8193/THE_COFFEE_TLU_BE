@@ -19,8 +19,7 @@ class typeproduct(db.Model):
     TypeProduct_Name = db.Column(db.String(100), unique=True, nullable=False)
     TypeProduct_Img = db.Column(db.String(100), unique=True, nullable=False)
     Menu_ID = db.Column(db.String(100), db.ForeignKey('Menu.Menu_ID'), nullable=False)
-    products = db.relationship('product', backref='typeproduct', lazy=True)
-
+    products = db.relationship('product', backref=db.backref('typeproduct',lazy=True),overlaps="products,typeproduct")
 Product_Topping = db.Table(
     "Product_Topping",
     db.Column('idProduct', db.String(100), db.ForeignKey('product.idProduct'),primary_key=True),
@@ -37,6 +36,7 @@ class product(db.Model):
     TypeProduct_ID = db.Column(db.String(100), db.ForeignKey('typeproduct.TypeProduct_ID'), nullable=False)
     toppings = db.relationship("Topping", secondary=Product_Topping, back_populates="products")
     order_details = db.relationship('Order_Detail', backref='product', lazy=True)
+    type_product = db.relationship('typeproduct', backref=db.backref('product', lazy=True),overlaps="products,typeproduct")
 
 class Topping(db.Model):
     __tablename__ = 'Topping'  # Xác định tên bảng một cách rõ ràng
@@ -92,6 +92,7 @@ class news(db.Model):
     News_Content = db.Column(db.Text)
     News_Time = db.Column(db.String(100), default='default_time_value')
     TypeNews_ID = db.Column(db.String(300), db.ForeignKey('typenews.TypeNews_ID'), nullable=False)
+    type_news = db.relationship('typenews', backref=db.backref('news', lazy=True))
 
 
 

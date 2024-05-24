@@ -38,16 +38,33 @@ def add_news():
 
 @news_bp.route('/news', methods=['GET'])
 def get_newses():
-    all_newses = news.query.all()
-    result = newses_schema.dump(all_newses)
-    return jsonify(result), 200
+    try:
+        news_with_type = db.session.query(news, typenews).join(typenews).all()
+        result = []
+        for newsItem, typenewsItem in news_with_type:
+            news_data = {
+                'News_ID': newsItem.News_ID,
+                'News_Title': newsItem.News_Title,
+                'News_Image': newsItem.News_Image,
+                'News_Description': newsItem.News_Description,
+                'News_Content': newsItem.News_Content,
+                'News_Time': newsItem.News_Time,
+                'TypeNews_ID': typenewsItem.TypeNews_ID,
+                'TypeNews_Name': typenewsItem.TypeNews_Name
+            }
+            result.append(news_data)
+        return jsonify({"data":result}), 200
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
 
 @news_bp.route('/news/<string:id>', methods=['GET'])
 def get_news(id):
     check = db.session.query(news.News_ID).filter_by(News_ID=id).first() is not None
     if check:
         News = news.query.get_or_404(id)
-        return news_schema.jsonify(News),200
+        result = news_schema.dump(News)
+        return jsonify({"data":result}), 200
     else:
         return {
                 'message': "KO tìm thấy bản ghi",
@@ -106,3 +123,37 @@ def delete_news(id):
                 'status': 400,
                 'Error': 'ERR',
             }, 400
+@news_bp.route('/news/pagination/data', methods=['GET'])
+def pagination():
+    page = int(request.args.get('page', 1))
+    pageSize = int(request.args.get('pageSize', 10))
+    typeNews = request.args.get('typeNews')
+
+    offset = (page - 1) * pageSize
+
+    # Perform query to get paginated data
+    news_data = db.session.query(news, typenews.TypeNews_Name).\
+                join(typenews, news.TypeNews_ID == typenews.TypeNews_ID).\
+                filter(typenews.TypeNews_Name == typeNews).\
+                limit(pageSize).offset(offset).all()
+
+    total_count = db.session.query(news).\
+                join(typenews, news.TypeNews_ID == typenews.TypeNews_ID).\
+                filter(typenews.TypeNews_Name == typeNews).\
+                count()
+
+    return jsonify({
+        'data': [serialize_data(n, t) for n, t in news_data],
+        'total_count': total_count
+    })
+
+def serialize_data(news_obj, type_name):
+    return {
+        'News_ID': news_obj.News_ID,
+        'News_Title': news_obj.News_Title,
+        'News_Image': news_obj.News_Image,
+        'News_Description': news_obj.News_Description,
+        'News_Content': news_obj.News_Content,
+        'News_Time': news_obj.News_Time,
+        'TypeNews_Name': type_name
+    }

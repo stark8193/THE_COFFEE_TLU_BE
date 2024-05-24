@@ -47,9 +47,18 @@ def add_typeProduct():
 @typeProduct_bp.route('/typeProduct', methods=['GET'])
 def get_typeProducts():
     try:
-        all_typeProducts = typeproduct.query.all()
-        result = typeProducts_schema.dump(all_typeProducts)
-        return jsonify(result), 200
+        results = db.session.query(typeproduct, Menu).join(Menu).all()
+        typeproducts_with_menu = []
+        for typeproductItem, menu in results:
+            typeproducts_with_menu.append({
+                'TypeProduct_ID': typeproductItem.TypeProduct_ID,
+                'TypeProduct_Name': typeproductItem.TypeProduct_Name,
+                'TypeProduct_Img': typeproductItem.TypeProduct_Img,
+                'Menu_ID': menu.Menu_ID,
+                'Name_Menu': menu.Name_Menu
+            })
+
+        return jsonify({"data":typeproducts_with_menu})
     except:
         return {
             'Error': 'ERR',

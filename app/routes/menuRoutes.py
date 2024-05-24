@@ -9,7 +9,7 @@ menu_schema = MenuSchema()
 menus_schema = MenuSchema(many=True)
 
 @menu_bp.route('/menu', methods=['POST'])
-def add_product():
+def add_menu():
     data = request.get_json()
     name = data.get('Name_Menu')
     if name:
@@ -44,7 +44,7 @@ def get_menus():
     try:
         all_menus = Menu.query.all()
         result = menus_schema.dump(all_menus)
-        return jsonify(result),200
+        return jsonify({"data":result}),200
     except:
         return {
             'Error': 'ERR',

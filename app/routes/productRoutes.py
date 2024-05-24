@@ -31,7 +31,7 @@ def add_product():
                                     , TypeProduct_ID=type_product_id)
                 db.session.add(new_product)
                 db.session.commit()
-                return product_schema.jsonify(new_product), 200  # Return with HTTP status 201 for created
+                return jsonify(new_product), 200  # Return with HTTP status 201 for created
             except:
                 return {
                     'Error': 'ERR',
@@ -54,7 +54,7 @@ def get_products():
     try:
         all_products = product.query.all()
         result = products_schema.dump(all_products)
-        return jsonify(result), 200
+        return jsonify({"data":result}), 200
     except:
         return {
             'Error': 'ERR',
@@ -66,7 +66,8 @@ def get_product(id):
     if check:
         try: 
             product_get_by_id = product.query.get_or_404(id)
-            return product_schema.jsonify(product_get_by_id),200
+            result = product_schema.dump(product_get_by_id)
+            return jsonify({"data":result}),200
         except:
             return {
                 'Error': 'ERR',
@@ -148,3 +149,17 @@ def delete_product(id):
                 'status': 400,
                 'Error': 'ERR',
             }, 400
+@product_bp.route('/product/getProductByType/<type_id>', methods=['GET'])
+def get_products_by_type(type_id):
+    products = product.query.join(typeproduct).filter(typeproduct.TypeProduct_ID == type_id).all()
+    product_list = []
+    for productItem in products:
+        product_list.append({
+            'idProduct': productItem.idProduct,
+            'Product_Name': productItem.Product_Name,
+            'Product_Image': productItem.Product_Image,
+            'Product_Price': productItem.Product_Price,
+            'Product_Description': productItem.Product_Description,
+            'TypeProduct_ID': productItem.TypeProduct_ID
+        })
+    return jsonify({"data":product_list})
