@@ -51,7 +51,7 @@ def login():
         return jsonify(message="Invalid username or password"), 401
 
     access_token = create_access_token(identity=username)
-    return jsonify(access_token=access_token), 200
+    return jsonify(data=access_token), 200
 
 # Route đăng xuất
 @auth_bp.route('/logout', methods=['POST'])
@@ -69,11 +69,21 @@ def modify_token():
 def get_user_profile():
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
+    
     if not user:
         return jsonify(message="User not found"), 404
+    
+    user_data = {
+        'id': user.id,
+        'username': user.username,
+        'password': user.password,
+        'email': user.email,
+        'address': user.address,
+        'phoneNumber': user.phoneNumber,
+        'role': user.role
+    }
 
-    return user_schema.jsonify(user), 200
-
+    return jsonify({'data': user_data}), 200
 # Bảo vệ các route sử dụng decorator @jwt_required() và kiểm tra vai trò của người dùng
 @auth_bp.route('/admin_only', methods=['GET'])
 @jwt_required()
@@ -81,6 +91,6 @@ def admin_only():
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
     if not user or user.role != 'admin':
-        return jsonify(message="Unauthorized"), 403
+        return jsonify({'data':{'message':"Unauthorized", 'admin':False}}), 403
 
-    return jsonify(message="Hello admin!"), 200
+    return jsonify({'data':{'message':"Hello admin!", 'admin':True}}), 200

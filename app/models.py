@@ -19,7 +19,8 @@ class typeproduct(db.Model):
     TypeProduct_Name = db.Column(db.String(100), unique=True, nullable=False)
     TypeProduct_Img = db.Column(db.String(100), unique=True, nullable=False)
     Menu_ID = db.Column(db.String(100), db.ForeignKey('Menu.Menu_ID'), nullable=False)
-    products = db.relationship('product', backref=db.backref('typeproduct',lazy=True),overlaps="products,typeproduct")
+    products = db.relationship('product', backref=db.backref('typeproduct', lazy=True), overlaps="products,typeproduct")
+
 Product_Topping = db.Table(
     "Product_Topping",
     db.Column('idProduct', db.String(100), db.ForeignKey('product.idProduct'),primary_key=True),
@@ -35,7 +36,8 @@ class product(db.Model):
     Product_Description = db.Column(db.String(1000))
     TypeProduct_ID = db.Column(db.String(100), db.ForeignKey('typeproduct.TypeProduct_ID'), nullable=False)
     toppings = db.relationship("Topping", secondary=Product_Topping, back_populates="products")
-    type_product = db.relationship('typeproduct', backref=db.backref('product', lazy=True),overlaps="products,typeproduct")
+    type_product = db.relationship('typeproduct', backref=db.backref('product', lazy=True), overlaps="products,typeproduct")
+
 
 class Topping(db.Model):
     __tablename__ = 'Topping'  # Xác định tên bảng một cách rõ ràng
@@ -52,7 +54,8 @@ class User(db.Model):
     address = db.Column(db.Text(), nullable=False)
     phoneNumber = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), default='user', nullable=False) 
-
+    def __repr__(self):
+        return f'<User {self.id} - {self.username}>'
 class typenews(db.Model):
     TypeNews_ID = db.Column(db.Integer, primary_key = True)
     TypeNews_Name = db.Column(db.String(100), nullable=False)
