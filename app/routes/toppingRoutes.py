@@ -57,7 +57,9 @@ def get_topping(id):
     if check:
         try: 
             topping_get_by_id = Topping.query.get_or_404(id)
-            return topping_schema.jsonify(topping_get_by_id),200
+            # return topping_schema.jsonify(topping_get_by_id),200
+            result = topping_schema.dump(topping_get_by_id)
+            return jsonify({"data": [result]}), 200
         except:
             return {
                 'Error': 'ERR',

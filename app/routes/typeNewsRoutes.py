@@ -44,7 +44,9 @@ def get_typenews(id):
     check = db.session.query(typenews.TypeNews_ID).filter_by(TypeNews_ID=id).first() is not None
     if check:
         TypeNews = typenews.query.get_or_404(id)
-        return typenews_schema.jsonify(TypeNews),200
+        # return typenews_schema.jsonify(TypeNews),200
+        result = typenews_schema.dump(TypeNews)
+        return jsonify({"data": [result]}), 200
     else:
         return {
                 'message': "KO tìm thấy bản ghi",
