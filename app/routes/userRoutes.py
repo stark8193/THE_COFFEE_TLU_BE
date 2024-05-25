@@ -43,7 +43,7 @@ def register():
 def get_users():
     try:
         all_user = User.query.all()
-        result = user_schema.dump(all_user)
+        result = users_schema.dump(all_user)
         return jsonify(result), 200
     except:
         return {

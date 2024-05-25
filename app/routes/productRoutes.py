@@ -18,7 +18,8 @@ def add_product():
     description = data.get('Product_Description')
     type_product_id = data.get('TypeProduct_ID')
     if name and image and price and type_product_id:
-        check_type_product_id = db.session.query(typeproduct.TypeProduct_ID).filter_by(TypeProduct_ID=type_product_id).first() is not None
+        check_type_product_id = db.session.query(typeproduct.TypeProduct_ID)\
+                                .filter_by(TypeProduct_ID=type_product_id).first() is not None
         check_name = db.session.query(product.Product_Name).filter_by(Product_Name=name).first() is None
         check_image = db.session.query(product.Product_Image).filter_by(Product_Image=image).first() is None
 

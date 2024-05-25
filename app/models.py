@@ -46,7 +46,7 @@ class Topping(db.Model):
     products = db.relationship("product", secondary=Product_Topping, back_populates="toppings")
 
 
-class User(db.Model):
+class User(db.Model): 
     __tablename__ = 'User'
     User_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
     User_Name = db.Column(db.String(100), unique=True, nullable=False)
@@ -76,8 +76,8 @@ class Order_Detail(db.Model):
 class Topping_Addition(db.Model):
     __tablename__ = 'Topping_Addition'
     Topping_Addition_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
-    Topping_Addition_Name = db.Column(db.String(100),unique=True, nullable=False)
-    Topping_Addition_Price = db.Column(db.Integer, nullable=False)
+    Topping_Addition_Name = db.Column(db.String(100),unique=True)
+    Topping_Addition_Price = db.Column(db.Integer)
     Order_Detail_ID = db.Column(db.String(100), db.ForeignKey('Order_Detail.Order_Detail_ID'), nullable=False)
     
 class typenews(db.Model):

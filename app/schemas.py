@@ -24,6 +24,18 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
 
+class OrderSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Order
+
+class OrderDetailSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Order_Detail 
+
+class ToppingAdditionSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Topping_Addition                       
+
 class TypeNewsSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model= typenews
