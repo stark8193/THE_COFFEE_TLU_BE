@@ -45,7 +45,7 @@ def get_toppings():
     try:
         all_toppings = Topping.query.all()
         result = toppings_schema.dump(all_toppings)
-        return jsonify(result), 200
+        return jsonify({'data':result}), 200
     except:
         return {
             'Error': 'ERR',
