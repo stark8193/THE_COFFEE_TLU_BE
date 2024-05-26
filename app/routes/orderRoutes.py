@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, url_for, redirect
+from sqlalchemy.orm import aliased
 from app.models import Order, Order_Detail, Topping_Addition, product
 from app.schemas import OrderSchema, OrderDetailSchema, ToppingAdditionSchema
 from app import db, app
@@ -100,10 +101,13 @@ def add_product():
         ).first() is None
         if (check_product_id and check_topping_name):
             print("11111")
-            print('check_topping_name',check_topping_name)
+            id_order_topping_name = Topping_Addition.query.filter_by(
+                Order_Detail_ID=order_detail_id_old.Order_Detail_ID,
+                Topping_Addition_Name=topping_addition_name
+            ).first()
             try:
                 # print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
-                product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id_old.Order_Detail_ID)
+                product_order_detail_update = Order_Detail.query.get_or_404(id_order_topping_name.Order_Detail_ID)
                 new_quantity = order_detail_id_old.Order_Quantity + order_quantity
                 # print('new_quantity',new_quantity)
                 product_order_detail_update.Order_Quantity = new_quantity
@@ -114,9 +118,14 @@ def add_product():
                 return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
         elif (check_product_id and check_topping_name_NULL and not topping_addition_name):
             print("222222")
+            id_order_topping_name_NULL = Topping_Addition.query.filter_by(
+                Order_Detail_ID=order_detail_id_old.Order_Detail_ID,
+                Topping_Addition_Name=''
+            ).first()
+            print('id_order_topping_name_NULL.Order_Detail_ID:',id_order_topping_name_NULL.Order_Detail_ID)
             try:
                 # print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
-                product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id_old.Order_Detail_ID)
+                product_order_detail_update = Order_Detail.query.get_or_404(id_order_topping_name_NULL.Order_Detail_ID)
                 new_quantity = order_detail_id_old.Order_Quantity + order_quantity
                 # print('new_quantity',new_quantity)
                 product_order_detail_update.Order_Quantity = new_quantity
@@ -124,7 +133,7 @@ def add_product():
                 return orderDetail_schema.jsonify(product_order_detail_update),200
             except Exception as e:
                 db.session.rollback()
-                return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
+                return jsonify({'Error': 'ERR4', 'message': str(e)}), 404
         else: 
             print("3333333")
             try:
@@ -149,7 +158,26 @@ def add_product():
                 return jsonify({"message": "Product added to order successfully"}), 201
             except Exception as e:
                 db.session.rollback()
-                return jsonify({'Error': 'ERR4', 'message': str(e)}), 404
+                return jsonify({'Error': 'ERR5', 'message': str(e)}), 404
     else:
         return jsonify({'Error': 'ERR5'}), 404
 
+@order_bp.route('/get_order', methods=['GET'])
+def get_order():
+    data = request.get_json()
+    user_id = data.get('User_ID')
+    order_id = db.session.query(Order).filter_by(
+        User_ID=user_id,
+        Order_Status="Chưa xác nhận"
+    ).first()
+    print('order_id ở đây 3:',order_id.Order_ID)
+    if order_id:
+        try:
+            order_detail_id_old = Order_Detail.query.filter_by(Order_ID=order_id.Order_ID)
+            print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
+            orders_detail_get = Order_Detail.query.get_or_404(order_detail_id_old)
+            result = order_schema.dump(orders_detail_get)
+            return jsonify({"data": [result]}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'Error': 'ERR6', 'message': str(e)}), 404
