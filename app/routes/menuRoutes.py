@@ -61,7 +61,9 @@ def get_menu(id):
     if check:
         try: 
             menu = Menu.query.get_or_404(id)
-            return menu_schema.jsonify(menu),200
+            # return menu_schema.jsonify(menu),200
+            result = menu_schema.dump(menu)
+            return jsonify({"data": [result]}), 200
         except:
             return {
                 'Error': 'ERR',
