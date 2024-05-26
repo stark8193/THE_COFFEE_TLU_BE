@@ -109,7 +109,6 @@ def add_product():
                 db.session.rollback()
                 return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
         else: 
-            print("3333333")
             try:
                 new_order_detail = Order_Detail(
                     Order_Quantity=order_quantity,

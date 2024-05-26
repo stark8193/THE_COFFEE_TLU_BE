@@ -21,12 +21,10 @@ def add_typeProduct():
         check_image = db.session.query(typeproduct.TypeProduct_Img).filter_by(TypeProduct_Img=image).first() is None
         if check_menu_id and check_name and check_image:
             try:
-                print('check_menu_id:',check_menu_id)
-                print('check_name:',check_name)
                 new_typeProduct = typeproduct(TypeProduct_Name=name, TypeProduct_Img=image, Menu_ID=menu_id)
                 db.session.add(new_typeProduct)
                 db.session.commit()
-                return typeProduct_schema.jsonify(new_typeProduct), 200  # Return with HTTP status 201 for created
+                return jsonify(new_typeProduct), 200  # Return with HTTP status 201 for created
             except:
                 return {
                     'Error': 'ERR',

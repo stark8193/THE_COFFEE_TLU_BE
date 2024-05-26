@@ -20,7 +20,7 @@ class typeproduct(db.Model):
     TypeProduct_Name = db.Column(db.String(100), unique=True, nullable=False)
     TypeProduct_Img = db.Column(db.String(100), unique=True, nullable=False)
     Menu_ID = db.Column(db.String(100), db.ForeignKey('Menu.Menu_ID'), nullable=False)
-    products = db.relationship('product', backref=db.backref('typeproduct',lazy=True),overlaps="products,typeproduct")
+    products = db.relationship('product', backref=db.backref('typeproduct', lazy=True), overlaps="products,typeproduct")
 
 Product_Topping = db.Table(
     "Product_Topping",

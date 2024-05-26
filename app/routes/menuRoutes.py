@@ -21,7 +21,12 @@ def add_menu():
                 new_menu = Menu(Name_Menu=name)
                 db.session.add(new_menu)
                 db.session.commit()
-                return menu_schema.jsonify(new_menu), 200  # Return with HTTP status 201 for created
+                menu_data = {
+                    'Name_Menu':new_menu.Name_Menu,
+                    'Menu_ID':new_menu.Menu_ID
+                    
+                }
+                return jsonify({'data':menu_data}), 200  # Return with HTTP status 201 for created
             except:
                 return {
                     'Error': 'ERR',

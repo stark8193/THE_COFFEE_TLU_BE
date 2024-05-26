@@ -26,8 +26,7 @@ def add_product_topping():
         return jsonify({'message': 'Sản phẩm không tồn tại'}), 404
 
     if topping is None:
-        return jsonify({'message': 'Topping không tồn tại'}), 404
-
+        return jsonify({'message': 'Topping không tồn tại'}), 404 
     # Tạo một bản ghi mới trong bảng liên kết Product_Topping
     product_topping = Product_Topping.insert().values(idProduct=product_id, Topping_ID=topping_id)
     db.session.execute(product_topping)
@@ -35,7 +34,7 @@ def add_product_topping():
 
     return jsonify({'message': 'Liên kết sản phẩm và topping đã được tạo thành công'}), 201
 
-@product_topping_bp.route('/get_product_topping', methods=['GET'])
+@product_topping_bp.route('/get_product_topping', methods=['POST'])
 def get_product_topping():
     data = request.get_json()
     product_id = data.get('idProduct')

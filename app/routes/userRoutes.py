@@ -19,7 +19,7 @@ def register():
     data = request.get_json()   
     username = data.get('User_Name') 
     password = data.get('User_Password')
-    email = data.get('User_Email')
+    email = data.get('User_Name')
     address = data.get('User_Address')
     phoneNumber = data.get('User_PhoneNumber')
     role = data.get('role', 'User')  # Mặc định là role 'user' nếu không được chỉ định
@@ -56,13 +56,16 @@ def login():
     username = data.get('User_Name')
     password = data.get('User_Password')
 
+    # Fetch the user from the database
     user = User.query.filter_by(User_Name=username).first()
 
-    if not user or not pbkdf2_sha256.verify(password, User.User_Password):
+    # Ensure the user exists and the password is correct
+    if not user or not pbkdf2_sha256.verify(password, user.User_Password):
         return jsonify(message="Invalid username or password"), 401
 
+    # Create access token
     access_token = create_access_token(identity=username)
-    return jsonify(access_token=access_token), 200
+    return jsonify(data=access_token), 200
 
 # Route đăng xuất
 @auth_bp.route('/logout', methods=['POST'])
@@ -80,11 +83,21 @@ def modify_token():
 def get_user_profile():
     current_user = get_jwt_identity()
     user = User.query.filter_by(User_Name=current_user).first()
+        
     if not user:
         return jsonify(message="User not found"), 404
+    
+    user_data = {
+        'User_ID': user.User_ID,
+        'User_Name': user.User_Name,
+        'User_Password': user.User_Password,
+        'User_Email': user.User_Email,
+        'User_Address': user.User_Address,
+        'User_PhoneNumber': user.User_PhoneNumber,
+        'role': user.role
+    }
 
-    return user_schema.jsonify(user), 200
-
+    return jsonify({'data': user_data}), 200
 # Bảo vệ các route sử dụng decorator @jwt_required() và kiểm tra vai trò của người dùng
 @auth_bp.route('/admin_only', methods=['GET'])
 @jwt_required()
@@ -92,6 +105,6 @@ def admin_only():
     current_user = get_jwt_identity()
     user = User.query.filter_by(User_Name=current_user).first()
     if not user or user.role != 'admin':
-        return jsonify(message="Unauthorized"), 403
+        return jsonify({'data':{'message':"Unauthorized", 'admin':False}}), 403
 
-    return jsonify(message="Hello admin!"), 200
+    return jsonify({'data':{'message':"Hello admin!", 'admin':True}}), 200
