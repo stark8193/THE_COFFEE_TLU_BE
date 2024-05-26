@@ -35,6 +35,7 @@ from app.routes.userRoutes import auth_bp
 from app.routes.productRoutes import product_bp
 from app.routes.toppingRoutes import topping_bp 
 from app.routes.product_toppingRoutes import product_topping_bp 
+from app.routes.orderRoutes import order_bp 
 from app.routes.uploadRoutes import upload_bp
 from app.routes.typeNewsRoutes import typenews_bp
 from app.routes.newsRoute import news_bp
@@ -46,11 +47,12 @@ app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(menu_bp, url_prefix='/api')
 app.register_blueprint(typeProduct_bp, url_prefix='/api')
 app.register_blueprint(upload_bp)
-app.register_blueprint(product_topping_bp, url_prefix='/api')
-app.register_blueprint(typenews_bp, url_prefix='/api')
-app.register_blueprint(news_bp, url_prefix='/api')
+app.register_blueprint( product_topping_bp , url_prefix='/api')
+app.register_blueprint(typenews_bp, url_prefix='/api') 
+app.register_blueprint(news_bp, url_prefix='/api')  
+app.register_blueprint(order_bp, url_prefix='/api') 
 
-from app import routes
+from app import routes  
 from app.models import TokenBlocklist
 
 @app.route("/")
@@ -64,5 +66,4 @@ def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
     token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()
     return token is not None
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
