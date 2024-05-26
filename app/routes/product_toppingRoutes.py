@@ -34,7 +34,7 @@ def add_product_topping():
 
     return jsonify({'message': 'Liên kết sản phẩm và topping đã được tạo thành công'}), 201
 
-@product_topping_bp.route('/get_product_topping', methods=['GET'])
+@product_topping_bp.route('/get_product_topping', methods=['POST'])
 def get_product_topping():
     data = request.get_json()
     product_id = data.get('idProduct')

@@ -83,7 +83,7 @@ def modify_token():
 def get_user_profile():
     current_user = get_jwt_identity()
     user = User.query.filter_by(User_Name=current_user).first()
-    
+        
     if not user:
         return jsonify(message="User not found"), 404
     
