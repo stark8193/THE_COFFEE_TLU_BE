@@ -80,25 +80,18 @@ def update_topping(id):
             data = request.get_json()
             name = data.get('Topping_Name')
             price = data.get('Topping_Price')
-            if name and price:
-                check_name = db.session.query(Topping.Topping_Name).filter_by(Topping_Name=name).first() is None
-                if check_name:
+            check_name = db.session.query(Topping.Topping_Name).filter_by(Topping_Name=name).first() is None
+            if check_name:
                     topping_update.Topping_Name = name
                     topping_update.Topping_Price = price
                     db.session.commit()
                     return topping_schema.jsonify(topping_update),200
-                else:
+            else:
                     return {
                         'message': "Trùng tên",
                         'status': 400,
                         'Error': 'ERR',
                     }, 400
-            else:
-                return {
-                            'message': "Nhập thiếu dữ liệu",
-                            'status': 400,
-                            'Error': 'ERR',
-                        }, 400
         except:
             return {
                 'Error': 'ERR',
