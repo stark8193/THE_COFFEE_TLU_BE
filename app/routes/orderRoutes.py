@@ -95,19 +95,11 @@ def add_product():
             Topping_Addition_Name=topping_addition_name
         ).first() is not None
 
-        check_topping_name_NULL = db.session.query(Topping_Addition).filter_by(
-            Order_Detail_ID=order_detail_id_old.Order_Detail_ID,
-            Topping_Addition_Name=''
-        ).first() is None
         if (check_product_id and check_topping_name):
             print("11111")
-            id_order_topping_name = Topping_Addition.query.filter_by(
-                Order_Detail_ID=order_detail_id_old.Order_Detail_ID,
-                Topping_Addition_Name=topping_addition_name
-            ).first()
             try:
                 # print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
-                product_order_detail_update = Order_Detail.query.get_or_404(id_order_topping_name.Order_Detail_ID)
+                product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id_old.Order_Detail_ID)
                 new_quantity = order_detail_id_old.Order_Quantity + order_quantity
                 # print('new_quantity',new_quantity)
                 product_order_detail_update.Order_Quantity = new_quantity
@@ -116,24 +108,6 @@ def add_product():
             except Exception as e:
                 db.session.rollback()
                 return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
-        elif (check_product_id and check_topping_name_NULL and not topping_addition_name):
-            print("222222")
-            id_order_topping_name_NULL = Topping_Addition.query.filter_by(
-                Order_Detail_ID=order_detail_id_old.Order_Detail_ID,
-                Topping_Addition_Name=''
-            ).first()
-            print('id_order_topping_name_NULL.Order_Detail_ID:',id_order_topping_name_NULL.Order_Detail_ID)
-            try:
-                # print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
-                product_order_detail_update = Order_Detail.query.get_or_404(id_order_topping_name_NULL.Order_Detail_ID)
-                new_quantity = order_detail_id_old.Order_Quantity + order_quantity
-                # print('new_quantity',new_quantity)
-                product_order_detail_update.Order_Quantity = new_quantity
-                db.session.commit()
-                return orderDetail_schema.jsonify(product_order_detail_update),200
-            except Exception as e:
-                db.session.rollback()
-                return jsonify({'Error': 'ERR4', 'message': str(e)}), 404
         else: 
             print("3333333")
             try:
@@ -162,22 +136,84 @@ def add_product():
     else:
         return jsonify({'Error': 'ERR5'}), 404
 
-@order_bp.route('/get_order', methods=['GET'])
-def get_order():
+@order_bp.route('/update_order', methods=['PUT'])
+def update_order():
     data = request.get_json()
     user_id = data.get('User_ID')
     order_id = db.session.query(Order).filter_by(
         User_ID=user_id,
         Order_Status="Chưa xác nhận"
     ).first()
-    print('order_id ở đây 3:',order_id.Order_ID)
+    print('order_id ở đây 2:',order_id.Order_ID)
     if order_id:
-        try:
-            order_detail_id_old = Order_Detail.query.filter_by(Order_ID=order_id.Order_ID)
-            print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
-            orders_detail_get = Order_Detail.query.get_or_404(order_detail_id_old)
-            result = order_schema.dump(orders_detail_get)
-            return jsonify({"data": [result]}), 200
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'Error': 'ERR6', 'message': str(e)}), 404
+        product_id = data.get('idProduct')
+        order_quantity = data.get('Order_Quantity')
+        topping_addition_name = data.get('Topping_Addition_Name')
+        topping_addition_price = data.get('Topping_Addition_Price')
+        check_product_id = db.session.query(Order_Detail).filter_by(
+            idProduct=product_id,
+            Order_ID=order_id.Order_ID
+        ).first() is not None
+
+        order_detail_id_old = Order_Detail.query.filter_by(
+            idProduct=product_id,
+            Order_ID=order_id.Order_ID
+        ).first()
+
+        check_topping_name = db.session.query(Topping_Addition).filter_by(
+            Order_Detail_ID=order_detail_id_old.Order_Detail_ID,
+            Topping_Addition_Name=''
+        ).first() is not None
+
+        if check_product_id and check_topping_name:
+            print('check_topping_name',check_topping_name)
+            try:
+                product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id_old.Order_Detail_ID)
+                product_order_detail_update.Order_Quantity = order_quantity
+                db.session.commit()
+
+                new_topping_addition = Topping_Addition(Topping_Addition_Name=topping_addition_name, 
+                                                        Topping_Addition_Price=topping_addition_price)
+                db.session.add(new_topping_addition)
+                db.session.commit()
+                return orderDetail_schema.jsonify(product_order_detail_update),200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
+        else:
+            try:
+                product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id_old.Order_Detail_ID)
+                product_order_detail_update.Order_Quantity = order_quantity
+                db.session.commit()
+
+                topping_addition_update = Topping_Addition.query.get_or_404(order_detail_id_old.Order_Detail_ID)
+                topping_addition_update.Topping_Addition_Name = topping_addition_name
+                topping_addition_update.Topping_Addition_Price = topping_addition_price
+                db.session.commit()
+                return orderDetail_schema.jsonify(product_order_detail_update),200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'Error': 'ERR4', 'message': str(e)}), 404
+            
+    else:
+        return jsonify({'Error': 'Ko tồn tại order'}), 404
+
+# @order_bp.route('/get_order', methods=['GET'])
+# def get_order():
+#     data = request.get_json()
+#     user_id = data.get('User_ID')
+#     order_id = db.session.query(Order).filter_by(
+#         User_ID=user_id,
+#         Order_Status="Chưa xác nhận"
+#     ).first()
+#     print('order_id ở đây 3:',order_id.Order_ID)
+#     if order_id:
+#         try:
+#             order_detail_id_old = Order_Detail.query.filter_by(Order_ID=order_id.Order_ID)
+#             print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
+#             orders_detail_get = Order_Detail.query.get_or_404(order_detail_id_old)
+#             result = order_schema.dump(orders_detail_get)
+#             return jsonify({"data": [result]}), 200
+#         except Exception as e:
+#             db.session.rollback()
+#             return jsonify({'Error': 'ERR6', 'message': str(e)}), 404
