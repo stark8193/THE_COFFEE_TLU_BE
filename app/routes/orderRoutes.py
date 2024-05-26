@@ -135,65 +135,76 @@ def add_product():
     else:
         return jsonify({'Error': 'ERR5'}), 404
 
-@order_bp.route('/update_order', methods=['PUT'])
-def update_order():
-    data = request.get_json()
-    order_detail_id = data.get('Order_Detail_ID')
-    product_id = data.get('idProduct')
-    order_quantity = data.get('Order_Quantity')
-    topping_addition_name = data.get('Topping_Addition_Name')
-    topping_addition_price = data.get('Topping_Addition_Price')
-    try:
-        product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id)
-        topping_addition_update = Topping_Addition.query.filter_by(Order_Detail_ID=order_detail_id).first_or_404()
-        product_order_detail_update.Order_Quantity = order_quantity
-        product_order_detail_update.idProduct = product_id
-        topping_addition_update.Topping_Addition_Name = topping_addition_name
-        topping_addition_update.Topping_Addition_Price = topping_addition_price
-        db.session.commit()
-        return orderDetail_schema.jsonify(product_order_detail_update),200
-    except Exception as e:
-            db.session.rollback()
-            return jsonify({'Error': 'ERR4', 'message': str(e)}), 404
-
-@order_bp.route('/update_order1', methods=['POST'])
-def update_order1():
-    data = request.get_json()
-    order_detail_id = data.get('Order_Detail_ID')
-    product_id = data.get('idProduct')
-    order_quantity = data.get('Order_Quantity')
-    topping_addition_name = data.get('Topping_Addition_Name')
-    topping_addition_price = data.get('Topping_Addition_Price')
-    try:
-        product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id)
-        product_order_detail_update.Order_Quantity = order_quantity
-        product_order_detail_update.idProduct = product_id
-
-        new_topping_addition = Topping_Addition(Topping_Addition_Name=topping_addition_name, 
-                                                        Topping_Addition_Price=topping_addition_price)
-        db.session.add(new_topping_addition)
-        db.session.commit()
-        return orderDetail_schema.jsonify(product_order_detail_update),200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
+@order_bp.route('/delete_order_detail/<string:id>', methods=['DELETE'])
+def delete_order_detail(id):
+    check = db.session.query(Topping_Addition.Order_Detail_ID).filter_by(Order_Detail_ID=id).first() is not None
+    if check:
+        print('check:',check)
+        try:
+            order_detail = Order_Detail.query.get_or_404(id)
+            topping_additions = Topping_Addition.query.filter_by(Order_Detail_ID=id).all()
+            for topping_addition in topping_additions:
+                db.session.delete(topping_addition)
+            db.session.delete(order_detail)
+            db.session.commit()
+            return{
+                    'message': 'Đã xóa bản ghi',
+                    'status': 200,
+                }, 200  # Return with HTTP status 204 for no content
+        except:
+            return {
+                'Error': 'ERR1',
+            },404
+    else:
+        try:
+            # topping_addition = Topping_Addition.query.get_or_404(id)
+            order_detail = Order_Detail.query.get_or_404(id)
+            # db.session.delete(topping_addition)
+            db.session.delete(order_detail)
+            db.session.commit()
+            return{
+                    'message': 'Đã xóa bản ghi',
+                    'status': 200,
+                }, 200  # Return with HTTP status 204 for no content
+        except:
+            return {
+                'Error': 'ERR2',
+            },404
      
-# @order_bp.route('/get_order', methods=['GET'])
-# def get_order():
-#     data = request.get_json()
-#     user_id = data.get('User_ID')
-#     order_id = db.session.query(Order).filter_by(
-#         User_ID=user_id,
-#         Order_Status="Chưa xác nhận"
-#     ).first()
-#     print('order_id ở đây 3:',order_id.Order_ID)
-#     if order_id:
-#         try:
-#             order_detail_id_old = Order_Detail.query.filter_by(Order_ID=order_id.Order_ID)
-#             print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
-#             orders_detail_get = Order_Detail.query.get_or_404(order_detail_id_old)
-#             result = order_schema.dump(orders_detail_get)
-#             return jsonify({"data": [result]}), 200
-#         except Exception as e:
-#             db.session.rollback()
-#             return jsonify({'Error': 'ERR6', 'message': str(e)}), 404
+
+@order_bp.route('/get_order_details', methods=['GET'])
+def get_order_details():
+    data = request.get_json()
+    user_id = data.get('User_ID')
+    
+    if not user_id:
+        return jsonify({'error': 'User_ID is required'}), 400
+
+    orders = db.session.query(
+        Order.Order_ID,
+        Order.Order_Date,
+        Order.Order_Status,
+        Order_Detail.Order_Detail_ID,
+        Order_Detail.idProduct,
+        Order_Detail.Order_Quantity,
+        Topping_Addition.Topping_Addition_Name,
+        Topping_Addition.Topping_Addition_Price
+    ).outerjoin(Order_Detail, Order.Order_ID == Order_Detail.Order_ID
+    ).outerjoin(Topping_Addition, Order_Detail.Order_Detail_ID == Topping_Addition.Order_Detail_ID
+    ).filter(Order.User_ID == user_id).all()
+
+    order_list = []
+    for order in orders:
+        order_dict = {
+            'Order_ID': order.Order_ID,
+            'Order_Date': order.Order_Date,
+            'Order_Status': order.Order_Status,
+            'Order_Detail_ID': order.Order_Detail_ID if order.Order_Detail_ID else '',
+            'idProduct': order.idProduct if order.idProduct else '',
+            'Order_Quantity': order.Order_Quantity if order.Order_Quantity else '',
+            'Topping_Addition_Name': order.Topping_Addition_Name if order.Topping_Addition_Name else '',
+            'Topping_Addition_Price': order.Topping_Addition_Price if order.Topping_Addition_Price else ''
+        }
+        order_list.append(order_dict)
+
+    return jsonify(order_list)
