@@ -27,6 +27,7 @@ def add_product():
             print('check_menu_id:',check_type_product_id)
             print('check_name:',check_name)
             try:
+                print(data)
                 new_product = product(Product_Name=name, Product_Image=image,Product_Price=price
                                     , Product_Description=description
                                     , TypeProduct_ID=type_product_id)

@@ -27,7 +27,6 @@ def add_order():
         ).first() is None
         print("check_order_status:",check_order_status)
         if check_order_status:
-    
             try:
                 new_order = Order(Order_Status="Chưa xác nhận", User_ID=user_id)
                 db.session.add(new_order)
@@ -69,8 +68,10 @@ def add_order():
 @order_bp.route('/add_product', methods=['POST'])
 def add_product():
     data = request.get_json()
+    user_id = data.get('User_ID')
     order_id = db.session.query(Order).filter_by(
-            Order_Status="Chưa xác nhận"
+        User_ID=user_id,
+        Order_Status="Chưa xác nhận"
     ).first()
     print('order_id ở đây 2:',order_id.Order_ID)
     if order_id:
@@ -82,14 +83,42 @@ def add_product():
             idProduct=product_id,
             Order_ID=order_id.Order_ID
         ).first() is not None
-        if check_product_id:
-            print('check_product_id',check_product_id)
+
+        order_detail_id_old = Order_Detail.query.filter_by(
+            idProduct=product_id,
+            Order_ID=order_id.Order_ID
+        ).first()
+
+        check_topping_name = db.session.query(Topping_Addition).filter_by(
+            Order_Detail_ID=order_detail_id_old.Order_Detail_ID,
+            Topping_Addition_Name=topping_addition_name
+        ).first() is not None
+
+        check_topping_name_NULL = db.session.query(Topping_Addition).filter_by(
+            Order_Detail_ID=order_detail_id_old.Order_Detail_ID,
+            Topping_Addition_Name=''
+        ).first() is None
+        if (check_product_id and check_topping_name):
+            print("11111")
+            print('check_topping_name',check_topping_name)
             try:
-                order_detail_id_old = Order_Detail.query.filter_by(idProduct=product_id).first()
-                print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
+                # print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
                 product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id_old.Order_Detail_ID)
                 new_quantity = order_detail_id_old.Order_Quantity + order_quantity
-                print('new_quantity',new_quantity)
+                # print('new_quantity',new_quantity)
+                product_order_detail_update.Order_Quantity = new_quantity
+                db.session.commit()
+                return orderDetail_schema.jsonify(product_order_detail_update),200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
+        elif (check_product_id and check_topping_name_NULL and not topping_addition_name):
+            print("222222")
+            try:
+                # print('order_detail_id:',order_detail_id_old.Order_Detail_ID)
+                product_order_detail_update = Order_Detail.query.get_or_404(order_detail_id_old.Order_Detail_ID)
+                new_quantity = order_detail_id_old.Order_Quantity + order_quantity
+                # print('new_quantity',new_quantity)
                 product_order_detail_update.Order_Quantity = new_quantity
                 db.session.commit()
                 return orderDetail_schema.jsonify(product_order_detail_update),200
@@ -97,6 +126,7 @@ def add_product():
                 db.session.rollback()
                 return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
         else: 
+            print("3333333")
             try:
                 new_order_detail = Order_Detail(
                     Order_Quantity=order_quantity,

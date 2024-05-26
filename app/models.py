@@ -13,6 +13,7 @@ class TokenBlocklist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(36), nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False)
+    
 class typeproduct(db.Model):
     __tablename__ = 'typeproduct'  # Xác định tên bảng một cách rõ ràng
     TypeProduct_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))

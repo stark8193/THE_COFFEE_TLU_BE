@@ -10,6 +10,7 @@ toppings_schema = ToppingSchema(many=True)
 
 @topping_bp.route('/topping', methods=['POST'])
 def add_topping():
+    
     data = request.get_json()
     name = data.get('Topping_Name')
     price = data.get('Topping_Price')
@@ -74,6 +75,7 @@ def get_topping(id):
 @topping_bp.route('/topping/<string:id>', methods=['PUT'])
 def update_topping(id):
     check = db.session.query(Topping.Topping_ID).filter_by(Topping_ID=id).first() is not None
+    print(check)
     if check:
         try:
             topping_update = Topping.query.get_or_404(id)

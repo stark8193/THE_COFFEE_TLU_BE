@@ -20,6 +20,7 @@ def upload_file():
         return jsonify({'error': 'Không có phần file'}), 400
 
     file = request.files['image']
+    print(file)
     if file.filename == '':
         return jsonify({'error': 'Không có file nào được chọn'}), 400
 
