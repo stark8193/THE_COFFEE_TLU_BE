@@ -13,6 +13,7 @@ class TokenBlocklist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(36), nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False)
+    
 class typeproduct(db.Model):
     __tablename__ = 'typeproduct'  # Xác định tên bảng một cách rõ ràng
     TypeProduct_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -20,6 +21,7 @@ class typeproduct(db.Model):
     TypeProduct_Img = db.Column(db.String(100), unique=True, nullable=False)
     Menu_ID = db.Column(db.String(100), db.ForeignKey('Menu.Menu_ID'), nullable=False)
     products = db.relationship('product', backref=db.backref('typeproduct',lazy=True),overlaps="products,typeproduct")
+
 Product_Topping = db.Table(
     "Product_Topping",
     db.Column('idProduct', db.String(100), db.ForeignKey('product.idProduct'),primary_key=True),

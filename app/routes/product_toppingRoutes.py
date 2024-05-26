@@ -15,8 +15,8 @@ products_schema = ProductSchema(many=True)
 @product_topping_bp.route('/product_topping', methods=['POST'])
 def add_product_topping():
     data = request.json
-    product_id = data['product_id']
-    topping_id = data['topping_id']
+    product_id = data['idProduct']
+    topping_id = data['Topping_ID']
 
     # Kiểm tra xem sản phẩm và topping tồn tại trong cơ sở dữ liệu
     Product = product.query.get(product_id)
@@ -34,5 +34,31 @@ def add_product_topping():
     db.session.commit()
 
     return jsonify({'message': 'Liên kết sản phẩm và topping đã được tạo thành công'}), 201
+
+@product_topping_bp.route('/get_product_topping', methods=['GET'])
+def get_product_topping():
+    data = request.get_json()
+    product_id = data.get('idProduct')
+    if not product_id:
+        return jsonify({"error": "idProduct is required"}), 400
+
+    product_obj = product.query.filter_by(idProduct=product_id).first()
+
+    if not product_obj:
+        return jsonify({"error": "Product not found"}), 404
+
+    toppings = product_obj.toppings
+
+    # Serialize the toppings to JSON format
+    toppings_list = []
+    for topping in toppings:
+        toppings_list.append({
+            "Topping_ID": topping.Topping_ID,
+            "Topping_Name": topping.Topping_Name,
+            "Topping_Price": topping.Topping_Price
+        })
+
+    return jsonify({'data':toppings_list}), 200
+
 
 
