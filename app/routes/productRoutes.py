@@ -95,9 +95,7 @@ def update_product(id):
             type_product_id = data.get('TypeProduct_ID')
             if type_product_id: 
                 check_type_product_id = db.session.query(typeproduct.TypeProduct_ID).filter_by(TypeProduct_ID=type_product_id).first() is not None
-                check_name = db.session.query(product.Product_Name).filter_by(Product_Name=name).first() is None
-                check_image = db.session.query(product.Product_Image).filter_by(Product_Image=image).first() is None
-                if check_type_product_id and check_name and check_image:
+                if check_type_product_id:
                     product_update.Product_Name = name
                     product_update.Product_Image = image
                     product_update.Product_Price = price
@@ -107,7 +105,7 @@ def update_product(id):
                     return product_schema.jsonify(product_update),200
                 else:
                     return {
-                        'message': "Trùng tên hoặc link ảnh, hoặc ko tồn tại trong TypeProduct",
+                        'message': "bản ghi ko tồn tại trong TypeProduct",
                         'status': 400,
                         'Error': 'ERR',
                     }, 400
