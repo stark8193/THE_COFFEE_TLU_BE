@@ -134,6 +134,7 @@ def add_product():
         ).first()
 
         if order_detail:
+            print('order_detail',order_detail)
             if toppings:
                 check_topping_name = all(
                     db.session.query(Topping_Addition).filter_by(
@@ -143,7 +144,7 @@ def add_product():
                 )
 
                 if check_topping_name:
-                    print('check_topping_name',check_topping_name)
+                    print('check_topping_name', check_topping_name)
                     try:
                         new_quantity = order_detail.Order_Quantity + order_quantity
                         order_detail.Order_Quantity = new_quantity
@@ -158,7 +159,7 @@ def add_product():
                         new_order_detail = Order_Detail(
                             Order_Quantity=order_quantity,
                             Order_ID=order.Order_ID,
-                            Order_Size= order_size,
+                            Order_Size=order_size,
                             idProduct=product_id
                         )
                         db.session.add(new_order_detail)
@@ -185,19 +186,48 @@ def add_product():
             else:
                 try:
                     new_order_detail_no_topping = Order_Detail(
-                                Order_Quantity=order_quantity,
-                                Order_ID=order.Order_ID,
-                                Order_Size= order_size,
-                                idProduct=product_id
-                            )
+                        Order_Quantity=order_quantity,
+                        Order_ID=order.Order_ID,
+                        Order_Size=order_size,
+                        idProduct=product_id
+                    )
                     db.session.add(new_order_detail_no_topping)
                     db.session.commit()
                     return jsonify({"message": "Product added to order successfully"}), 201
                 except Exception as e:
-                        db.session.rollback()
-                        return jsonify({'Error': 'ERR5', 'message': str(e)}), 404
+                    db.session.rollback()
+                    return jsonify({'Error': 'ERR5', 'message': str(e)}), 404
+        else:
+            try:
+                order_detail_new = Order_Detail(
+                    Order_Quantity=order_quantity,
+                    Order_ID=order.Order_ID,
+                    Order_Size=order_size,
+                    idProduct=product_id
+                )
+                db.session.add(order_detail_new)
+                db.session.commit()
+
+                if toppings and isinstance(toppings, list):
+                    order_detail_id = order_detail_new.Order_Detail_ID
+                    for topping in toppings:
+                        topping_name = topping.get('Topping_Addition_Name')
+                        topping_price = topping.get('Topping_Addition_Price')
+                        if topping_name and topping_price:
+                            new_topping_addition = Topping_Addition(
+                            Topping_Addition_Name=topping_name,
+                            Topping_Addition_Price=topping_price,
+                            Order_Detail_ID=order_detail_id
+                            )
+                            db.session.add(new_topping_addition)
+                    db.session.commit()
+                return jsonify({"message": "Product added to order successfully"}), 201
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'Error': 'ERR7', 'message': str(e)}), 404
     else:
-        return jsonify({'Error': 'ERR6'}), 404
+        return jsonify({'Error': 'ERR6', 'message': 'Order not found or already confirmed'}), 404
+
 
 ''' đầu vào là Order_Detail_ID
     sửa số lượng, size và trong trường hợp  khi người dùng sửa topping đi, 
