@@ -71,6 +71,7 @@ class Order_Detail(db.Model):
     __tablename__ = 'Order_Detail'
     Order_Detail_ID = db.Column(db.String(100), unique=True, primary_key=True, default=lambda: str(uuid.uuid4()))
     Order_Quantity = db.Column(db.Integer, nullable=False)
+    Order_Size = db.Column(db.String(100), nullable=False)
     Order_ID = db.Column(db.String(100), db.ForeignKey('Order.Order_ID'), nullable=False)
     idProduct = db.Column(db.String(100), db.ForeignKey('product.idProduct'), nullable=False)
     topping_additions = db.relationship('Topping_Addition', backref='Order_Detail', lazy=True)
