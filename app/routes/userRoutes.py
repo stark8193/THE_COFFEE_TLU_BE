@@ -80,7 +80,7 @@ def modify_token():
 # Bảo vệ các route sử dụng decorator @jwt_required() và kiểm tra vai trò của người dùng
 @auth_bp.route('/user', methods=['GET'])
 @jwt_required()
-def get_user_profile():
+def get_user_profile(): 
     current_user = get_jwt_identity()
     user = User.query.filter_by(User_Name=current_user).first()
         

@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify, request, url_for, redirect
 from sqlalchemy.orm import aliased
-from app.models import Order, Order_Detail, Topping_Addition, product
+from app.models import Order, Order_Detail, Topping_Addition, User
 from app.schemas import OrderSchema, OrderDetailSchema, ToppingAdditionSchema
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
+
 from app import db, app
 
 order_bp = Blueprint('order_bp', __name__)
@@ -15,7 +17,12 @@ orderDetails_schema = OrderDetailSchema(many=True)
 @order_bp.route('/add_order', methods=['POST'])
 def add_order():
     data = request.get_json()
-    user_id = data.get('User_ID')
+    # user_id = data.get('User_ID')
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(User_Name=current_user).first()
+    if not user:
+        return jsonify(message="User not found"), 404
+    user_id = user.User_ID
     product_id = data.get('idProduct')
     order_quantity = data.get('Order_Quantity')
     topping_addition_name = data.get('Topping_Addition_Name')

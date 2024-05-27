@@ -4,6 +4,7 @@ from app.schemas import ProductSchema
 from app.schemas import ToppingSchema
 from app import db, app
 from app.routes.productRoutes import product_bp
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
 
 product_topping_bp = Blueprint('product_topping_bp', __name__)
 
