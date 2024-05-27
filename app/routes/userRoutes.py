@@ -108,3 +108,4 @@ def admin_only():
         return jsonify({'data':{'message':"Unauthorized", 'admin':False}}), 403
 
     return jsonify({'data':{'message':"Hello admin!", 'admin':True}}), 200
+
