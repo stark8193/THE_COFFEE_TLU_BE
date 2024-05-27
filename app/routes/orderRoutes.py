@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify, request, url_for, redirect
 from sqlalchemy.orm import aliased
-from app.models import Order, Order_Detail, Topping_Addition, product
+from app.models import Order, Order_Detail, Topping_Addition, User, product
 from app.schemas import OrderSchema, OrderDetailSchema, ToppingAdditionSchema
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
+
 from app import db, app
 
 order_bp = Blueprint('order_bp', __name__)
@@ -32,9 +34,16 @@ orderDetails_schema = OrderDetailSchema(many=True)
     ]}
 '''
 @order_bp.route('/add_order', methods=['POST'])
+@jwt_required()
 def add_order():
     data = request.get_json()
-    user_id = data.get('User_ID')
+    # user_id = data.get('User_ID')
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(User_Name=current_user).first()
+    if not user:
+        return jsonify(message="User not found"), 404
+    user_id = user.User_ID
+    print('userId', user_id)
     product_id = data.get('idProduct')
     order_size = data.get('Order_Size')
     order_quantity = data.get('Order_Quantity')
@@ -91,7 +100,7 @@ def add_order():
 
 '''Chỉ cần gọi /add_order nó tự chạy vào đây
     TH2: có order chưa xác nhận muốn thêm cùng sản phẩm 
-   cùng loại topping (tức là chỉ thay đổi số lượng, size) thì thay đổi mỗi số lượng,size
+   cùng loại topping (tức là chỉ thay đổi số lượng, size) thì thay  đổi mỗi số lượng,size
    TH3: có order chưa xác nhận muốn thêm cùng sản phẩm (hoặc khác sp) 
    và khác topping thì thêm mới sp đó vs topping khác hoặc ko toppping
    
@@ -113,9 +122,15 @@ def add_order():
     ]}
 '''
 @order_bp.route('/add_product', methods=['POST'])  
+@jwt_required()
 def add_product():
     data = request.get_json()
-    user_id = data.get('User_ID')
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(User_Name=current_user).first()
+    if not user:
+        return jsonify(message="User not found"), 404
+    user_id = user.User_ID
+    print('user_id', user_id)
     order = db.session.query(Order).filter_by(
         User_ID=user_id,
         Order_Status="Chưa xác nhận"
@@ -277,9 +292,8 @@ def update_order_detail(id):
 def delete_order_detail(id):
     try:
         topping_additions_exist = db.session.query(Topping_Addition.Order_Detail_ID).filter_by(Order_Detail_ID=id).first() is not None
-
         order_detail = Order_Detail.query.get_or_404(id)
-
+ 
         if topping_additions_exist:
             print('Topping additions exist for order detail:', id)
             topping_additions = Topping_Addition.query.filter_by(Order_Detail_ID=id).all()
@@ -299,14 +313,15 @@ def delete_order_detail(id):
         return {
             'Error': 'ERR8',
             'message': str(e)
-        }, 404  
-
-     
-
+        }, 404
 @order_bp.route('/get_order_details', methods=['GET'])
+@jwt_required()
 def get_order_details():
-    data = request.get_json()
-    user_id = data.get('User_ID')
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(User_Name=current_user).first()
+    if not user:
+        return jsonify(message="User not found"), 404
+    user_id = user.User_ID
     
     if not user_id:
         return jsonify({'error': 'User_ID is required'}), 400
@@ -318,9 +333,12 @@ def get_order_details():
         Order_Detail.Order_Detail_ID,
         Order_Detail.idProduct,
         Order_Detail.Order_Quantity,
+        Order_Detail.Order_Size,
+        product.Product_Name,  # Thêm Product_Name vào truy vấn
         Topping_Addition.Topping_Addition_Name,
         Topping_Addition.Topping_Addition_Price
     ).outerjoin(Order_Detail, Order.Order_ID == Order_Detail.Order_ID
+    ).outerjoin(product, Order_Detail.idProduct == product.idProduct  # Liên kết đến bảng product
     ).outerjoin(Topping_Addition, Order_Detail.Order_Detail_ID == Topping_Addition.Order_Detail_ID
     ).filter(Order.User_ID == user_id).all()
 
@@ -342,7 +360,9 @@ def get_order_details():
                 'Order_Detail_ID': order_detail_id,
                 'Order_Date': order.Order_Date,
                 'Order_Status': order.Order_Status,
+                'Order_Size': order.Order_Size,
                 'idProduct': order.idProduct,
+                'Product_Name': order.Product_Name,  # Thêm Product_Name vào kết quả
                 'Order_Quantity': order.Order_Quantity,
                 'Toppings': []  # Initialize list to store toppings
             }
@@ -357,5 +377,57 @@ def get_order_details():
     # Convert dictionary values to list to construct the final response
     order_list = list(order_dict.values())
 
-    return jsonify({'data':order_list})
+    return jsonify({'data': order_list})
+
+@order_bp.route('/get_order_detail_product/<string:id>', methods=['GET'])
+@jwt_required()
+def get_order_detail_product(id):
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(User_Name=current_user).first()
+    if not user:
+        return jsonify(message="User not found"), 404
+    user_id = user.User_ID
+    
+    if not user_id:
+        return jsonify({'error': 'User_ID is required'}), 400
+    orders = db.session.query(
+        Order.Order_ID,
+        Order.Order_Date,
+        Order.Order_Status,
+        Order_Detail.Order_Detail_ID,
+        Order_Detail.idProduct,
+        Order_Detail.Order_Quantity,
+        Order_Detail.Order_Size,
+        product.Product_Name,  
+        Topping_Addition.Topping_Addition_Name,
+        Topping_Addition.Topping_Addition_Price
+    ).outerjoin(Order_Detail, Order.Order_ID == Order_Detail.Order_ID
+    ).outerjoin(product, Order_Detail.idProduct == product.idProduct
+    ).outerjoin(Topping_Addition, Order_Detail.Order_Detail_ID == Topping_Addition.Order_Detail_ID
+    ).filter(Order.User_ID == user_id,
+             Order.Order_Status == "Chưa xác nhận",
+             Order_Detail.idProduct == id).all()
+
+    # Construct response
+    order_details = {}
+    for order in orders:
+        order_detail_id = order.Order_Detail_ID
+        if order_detail_id not in order_details:
+            order_details[order_detail_id] = {
+                'Order_Date': order.Order_Date.strftime("%a, %d %b %Y %H:%M:%S GMT"),
+                'Order_Detail_ID': order.Order_Detail_ID,
+                'Order_ID': order.Order_ID,
+                'Order_Quantity': order.Order_Quantity,
+                'Order_Size': order.Order_Size,
+                'Order_Status': order.Order_Status,
+                'Product_Name': order.Product_Name,
+                'idProduct': order.idProduct,
+                'Toppings': []
+            }
+        order_details[order_detail_id]['Toppings'].append({
+            'Topping_Addition_Name': order.Topping_Addition_Name,
+            'Topping_Addition_Price': order.Topping_Addition_Price
+        })
+
+    return jsonify({"data":list(order_details.values())})
 
