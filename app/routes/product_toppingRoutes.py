@@ -17,7 +17,7 @@ products_schema = ProductSchema(many=True)
 def add_product_topping():
     data = request.json
     product_id = data['idProduct']
-    topping_id = data['Topping_ID']
+    topping_id = data['Topping_ID'] 
 
     # Kiểm tra xem sản phẩm và topping tồn tại trong cơ sở dữ liệu
     Product = product.query.get(product_id)
@@ -60,5 +60,13 @@ def get_product_topping():
 
     return jsonify({'data':toppings_list}), 200
 
-
-
+@product_topping_bp.route('/delete_product_topping/<string:id>', methods=['DELETE'])
+def delete_product_topping(id):
+    try:
+        entries_to_delete = Product_Topping.delete().filter_by(idProduct=id)
+        db.session.execute(entries_to_delete)
+        db.session.commit()
+        return jsonify({"message": "Toppings deleted successfully for the given product ID."}), 200
+    except Exception as e:
+        db.session.rollback()  # Rollback the session in case of error
+        return jsonify({"message": "An error occurred while deleting the toppings.", "error": str(e)}), 500
