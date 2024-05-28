@@ -287,6 +287,32 @@ def update_order_detail(id):
         return jsonify({'Error': 'ERR7', 'message': str(e)}), 404
 
 
+@order_bp.route('/delete_order/<string:id>', methods=['DELETE'])
+def delete_order(id):
+    try:
+        order = Order.query.filter_by(Order_ID=id).first()
+        if not order:
+            return jsonify({'message': 'Order not found'}), 404
+        
+        order_details = Order_Detail.query.filter_by(Order_ID=id).all()
+
+        for detail in order_details:
+            toppings = Topping_Addition.query.filter_by(Order_Detail_ID=detail.Order_Detail_ID).all()
+            for topping in toppings:
+                db.session.delete(topping)
+            
+            db.session.delete(detail)
+        
+        db.session.delete(order)
+        
+        db.session.commit()
+
+        return jsonify({'message': 'Order and related records deleted successfully'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'An error occurred while deleting the order', 'error': str(e)}), 500
+
 
 @order_bp.route('/delete_order_detail/<string:id>', methods=['DELETE'])
 def delete_order_detail(id):
@@ -314,6 +340,8 @@ def delete_order_detail(id):
             'Error': 'ERR8',
             'message': str(e)
         }, 404
+    
+
 @order_bp.route('/get_order_details', methods=['GET'])
 @jwt_required()
 def get_order_details():
@@ -378,6 +406,7 @@ def get_order_details():
     order_list = list(order_dict.values())
 
     return jsonify({'data': order_list})
+
 
 @order_bp.route('/get_order_detail_product/<string:id>', methods=['GET'])
 @jwt_required()
