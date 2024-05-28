@@ -1,10 +1,9 @@
-from flask import Blueprint, jsonify, request, url_for, redirect
-from sqlalchemy.orm import aliased
+from flask import Blueprint, jsonify, request
 from app.models import Order, Order_Detail, Topping_Addition, User, product
 from app.schemas import OrderSchema, OrderDetailSchema, ToppingAdditionSchema
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from app import db, app
+from app import db
 
 order_bp = Blueprint('order_bp', __name__)
 
@@ -14,142 +13,82 @@ orders_schema = OrderSchema(many=True)
 orderDetail_schema = OrderDetailSchema()
 orderDetails_schema = OrderDetailSchema(many=True)
 
-'''TH1: chưa có order nào hoặc có order đã xác nhận
-        thì thêm mới order đồng thời thêm mới order_detail vs topping_addition luôn
-    Tất cả đều là nhiều topping
-   {
-    "User_ID": "bf0886e9-810f-424a-acd2-d1cd8b62a368",
-    "idProduct": "0zvuaigyslst47jtd",
-    "Order_Size":"Lớn",
-    "Order_Quantity": 2,
-    "Toppings": [
-        {
-            "Topping_Addition_Name": "test1",
-            "Topping_Addition_Price": 1
-        },
-        {
-            "Topping_Addition_Name": "test2",
-            "Topping_Addition_Price": 1.5
-        }
-    ]}
-'''
 @order_bp.route('/add_order', methods=['POST'])
 @jwt_required()
 def add_order():
     data = request.get_json()
-    # user_id = data.get('User_ID')
     current_user = get_jwt_identity()
     user = User.query.filter_by(User_Name=current_user).first()
     if not user:
         return jsonify(message="User not found"), 404
     user_id = user.User_ID
-    print('userId', user_id)
+    
     product_id = data.get('idProduct')
     order_size = data.get('Order_Size')
     order_quantity = data.get('Order_Quantity')
     toppings = data.get('Toppings')  # List of toppings
     
-    if user_id:
-        check_order_status = db.session.query(Order).filter_by(
-            User_ID=user_id,
-            Order_Status="Chưa xác nhận"
-        ).first() is None
-        print("check_order_status:",check_order_status)
-        if check_order_status:
-            try:
-                new_order = Order(Order_Status="Chưa xác nhận", User_ID=user_id)
-                db.session.add(new_order)
-                db.session.commit()
-                
-                order_id = new_order.Order_ID
-                new_order_detail = Order_Detail(
-                    Order_Quantity=order_quantity,
-                    Order_ID=order_id,
-                    Order_Size= order_size,
-                    idProduct=product_id
-                )
-                db.session.add(new_order_detail)
-                db.session.commit()
-                
-                if toppings and isinstance(toppings, list):
-                    order_detail_id = new_order_detail.Order_Detail_ID
-                    for topping in toppings:
-                        topping_name = topping.get('Topping_Addition_Name')
-                        topping_price = topping.get('Topping_Addition_Price')
-                        if topping_name and topping_price:
-                            new_topping_addition = Topping_Addition(
-                                Topping_Addition_Name=topping_name,
-                                Topping_Addition_Price=topping_price,
-                                Order_Detail_ID=order_detail_id
-                            )
-                            db.session.add(new_topping_addition)
-                    db.session.commit()
-
-                return jsonify({'Mess':'Them thanh cong'}), 201
-            except Exception as e:
-                db.session.rollback()
-                return jsonify({'Error': 'ERR1', 'message': str(e)}), 404
-        else:
-            return redirect(url_for('order_bp.add_product'))
-    else:
-        return jsonify({
-            'message': "Thiếu User_ID",
-            'status': 400,
-            'Error': 'ERR2',
-        }), 400
-
-'''Chỉ cần gọi /add_order nó tự chạy vào đây
-    TH2: có order chưa xác nhận muốn thêm cùng sản phẩm 
-   cùng loại topping (tức là chỉ thay đổi số lượng, size) thì thay  đổi mỗi số lượng,size
-   TH3: có order chưa xác nhận muốn thêm cùng sản phẩm (hoặc khác sp) 
-   và khác topping thì thêm mới sp đó vs topping khác hoặc ko toppping
-   
-   Tất cả đều là nhiều topping
-   {
-    "User_ID": "bf0886e9-810f-424a-acd2-d1cd8b62a368",
-    "idProduct": "0zvuaigyslst47jtd",
-    "Order_Size":"Lớn",
-    "Order_Quantity": 2,
-    "Toppings": [
-        {
-            "Topping_Addition_Name": "test1",
-            "Topping_Addition_Price": 1
-        },
-        {
-            "Topping_Addition_Name": "test2",
-            "Topping_Addition_Price": 1.5
-        }
-    ]}
-'''
-@order_bp.route('/add_product', methods=['POST'])  
-@jwt_required()
-def add_product():
-    data = request.get_json()
-    current_user = get_jwt_identity()
-    user = User.query.filter_by(User_Name=current_user).first()
-    if not user:
-        return jsonify(message="User not found"), 404
-    user_id = user.User_ID
-    print('user_id', user_id)
-    order = db.session.query(Order).filter_by(
+    if not product_id or not order_size or not order_quantity:
+        return jsonify(message="Product ID, Order Size, and Order Quantity are required"), 400
+    
+    existing_order = db.session.query(Order).filter_by(
         User_ID=user_id,
         Order_Status="Chưa xác nhận"
     ).first()
     
-    if order:
-        print('order_id:', order.Order_ID)
-        product_id = data.get('idProduct')
-        order_quantity = data.get('Order_Quantity')
-        order_size = data.get('Order_Size')
-        toppings = data.get('Toppings')  # List of toppings
+    if existing_order is None:
+        try:
+            new_order = Order(Order_Status="Chưa xác nhận", User_ID=user_id)
+            db.session.add(new_order)
+            db.session.commit()
+            
+            order_id = new_order.Order_ID
+            add_order_details(order_id, product_id, order_size, order_quantity, toppings)
+            
+            return jsonify({'message': 'Order added successfully'}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'Error': 'ERR1', 'message': str(e)}), 500
+    else:
+        order_id = existing_order.Order_ID
+        return add_product_to_existing_order(order_id, product_id, order_size, order_quantity, toppings)
 
+def add_order_details(order_id, product_id, order_size, order_quantity, toppings):
+    try:
+        new_order_detail = Order_Detail(
+            Order_Quantity=order_quantity,
+            Order_ID=order_id,
+            Order_Size=order_size,
+            idProduct=product_id
+        )
+        db.session.add(new_order_detail)
+        db.session.commit()
+        
+        if toppings and isinstance(toppings, list):
+            order_detail_id = new_order_detail.Order_Detail_ID
+            for topping in toppings:
+                topping_name = topping.get('Topping_Addition_Name')
+                topping_price = topping.get('Topping_Addition_Price')
+                if topping_name and topping_price:
+                    new_topping_addition = Topping_Addition(
+                        Topping_Addition_Name=topping_name,
+                        Topping_Addition_Price=topping_price,
+                        Order_Detail_ID=order_detail_id
+                    )
+                    db.session.add(new_topping_addition)
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise
+
+def add_product_to_existing_order(order_id, product_id, order_size, order_quantity, toppings):
+    try:
         order_detail = db.session.query(Order_Detail).filter_by(
             idProduct=product_id,
-            Order_ID=order.Order_ID
+            Order_ID=order_id
         ).first()
-
+        
         if order_detail:
-            print('order_detail',order_detail)
             if toppings:
                 check_topping_name = all(
                     db.session.query(Topping_Addition).filter_by(
@@ -157,91 +96,28 @@ def add_product():
                         Topping_Addition_Name=topping['Topping_Addition_Name']
                     ).first() is not None for topping in toppings
                 )
-
                 if check_topping_name:
-                    print('check_topping_name', check_topping_name)
-                    try:
-                        new_quantity = order_detail.Order_Quantity + order_quantity
-                        order_detail.Order_Quantity = new_quantity
-                        order_detail.Order_Size = order_size
-                        db.session.commit()
-                        return orderDetail_schema.jsonify(order_detail), 200
-                    except Exception as e:
-                        db.session.rollback()
-                        return jsonify({'Error': 'ERR3', 'message': str(e)}), 404
+                    new_quantity = order_detail.Order_Quantity + order_quantity
+                    order_detail.Order_Quantity = new_quantity
+                    order_detail.Order_Size = order_size
+                    db.session.commit()
+                    return orderDetail_schema.jsonify(order_detail), 200
                 else:
-                    try:
-                        new_order_detail = Order_Detail(
-                            Order_Quantity=order_quantity,
-                            Order_ID=order.Order_ID,
-                            Order_Size=order_size,
-                            idProduct=product_id
-                        )
-                        db.session.add(new_order_detail)
-                        db.session.commit()
-
-                        if toppings and isinstance(toppings, list):
-                            order_detail_id = new_order_detail.Order_Detail_ID
-                            for topping in toppings:
-                                topping_name = topping.get('Topping_Addition_Name')
-                                topping_price = topping.get('Topping_Addition_Price')
-                                if topping_name and topping_price:
-                                    new_topping_addition = Topping_Addition(
-                                        Topping_Addition_Name=topping_name,
-                                        Topping_Addition_Price=topping_price,
-                                        Order_Detail_ID=order_detail_id
-                                    )
-                                    db.session.add(new_topping_addition)
-                            db.session.commit()
-                            
-                        return jsonify({"message": "Product added to order successfully"}), 201
-                    except Exception as e:
-                        db.session.rollback()
-                        return jsonify({'Error': 'ERR4', 'message': str(e)}), 404
+                    add_order_details(order_id, product_id, order_size, order_quantity, toppings)
+                    return jsonify({"message": "Product with different toppings added to order successfully"}), 201
             else:
-                try:
-                    new_order_detail_no_topping = Order_Detail(
-                        Order_Quantity=order_quantity,
-                        Order_ID=order.Order_ID,
-                        Order_Size=order_size,
-                        idProduct=product_id
-                    )
-                    db.session.add(new_order_detail_no_topping)
-                    db.session.commit()
-                    return jsonify({"message": "Product added to order successfully"}), 201
-                except Exception as e:
-                    db.session.rollback()
-                    return jsonify({'Error': 'ERR5', 'message': str(e)}), 404
-        else:
-            try:
-                order_detail_new = Order_Detail(
-                    Order_Quantity=order_quantity,
-                    Order_ID=order.Order_ID,
-                    Order_Size=order_size,
-                    idProduct=product_id
-                )
-                db.session.add(order_detail_new)
+                new_quantity = order_detail.Order_Quantity + order_quantity
+                order_detail.Order_Quantity = new_quantity
+                order_detail.Order_Size = order_size
                 db.session.commit()
+                return orderDetail_schema.jsonify(order_detail), 200
+        else:
+            add_order_details(order_id, product_id, order_size, order_quantity, toppings)
+            return jsonify({"message": "New product added to existing order successfully"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'Error': 'ERR2', 'message': str(e)}), 500
 
-                if toppings and isinstance(toppings, list):
-                    order_detail_id = order_detail_new.Order_Detail_ID
-                    for topping in toppings:
-                        topping_name = topping.get('Topping_Addition_Name')
-                        topping_price = topping.get('Topping_Addition_Price')
-                        if topping_name and topping_price:
-                            new_topping_addition = Topping_Addition(
-                            Topping_Addition_Name=topping_name,
-                            Topping_Addition_Price=topping_price,
-                            Order_Detail_ID=order_detail_id
-                            )
-                            db.session.add(new_topping_addition)
-                    db.session.commit()
-                return jsonify({"message": "Product added to order successfully"}), 201
-            except Exception as e:
-                db.session.rollback()
-                return jsonify({'Error': 'ERR7', 'message': str(e)}), 404
-    else:
-        return jsonify({'Error': 'ERR6', 'message': 'Order not found or already confirmed'}), 404
 
 
 ''' đầu vào là Order_Detail_ID
@@ -334,6 +210,7 @@ def get_order_details():
         Order_Detail.idProduct,
         Order_Detail.Order_Quantity,
         Order_Detail.Order_Size,
+        product.Product_Price,
         product.Product_Name,  # Thêm Product_Name vào truy vấn
         Topping_Addition.Topping_Addition_Name,
         Topping_Addition.Topping_Addition_Price
@@ -363,6 +240,7 @@ def get_order_details():
                 'Order_Size': order.Order_Size,
                 'idProduct': order.idProduct,
                 'Product_Name': order.Product_Name,  # Thêm Product_Name vào kết quả
+                'Product_Price': order.Product_Price,  
                 'Order_Quantity': order.Order_Quantity,
                 'Toppings': []  # Initialize list to store toppings
             }
@@ -399,6 +277,7 @@ def get_order_detail_product(id):
         Order_Detail.Order_Quantity,
         Order_Detail.Order_Size,
         product.Product_Name,  
+        product.Product_Price,
         Topping_Addition.Topping_Addition_Name,
         Topping_Addition.Topping_Addition_Price
     ).outerjoin(Order_Detail, Order.Order_ID == Order_Detail.Order_ID
@@ -422,6 +301,7 @@ def get_order_detail_product(id):
                 'Order_Status': order.Order_Status,
                 'Product_Name': order.Product_Name,
                 'idProduct': order.idProduct,
+                'Product_Price':order.Product_Price,
                 'Toppings': []
             }
         order_details[order_detail_id]['Toppings'].append({
