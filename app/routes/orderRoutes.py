@@ -377,7 +377,90 @@ def get_all_order_details():
     ).outerjoin(Order_Detail, Order.Order_ID == Order_Detail.Order_ID
     ).outerjoin(product, Order_Detail.idProduct == product.idProduct
     ).outerjoin(Topping_Addition, Order_Detail.Order_Detail_ID == Topping_Addition.Order_Detail_ID
-    ).all()
+    ).filter(Order.Order_Status != 'Chưa xác nhận').all()
+
+    orders_dict = {}
+
+    for order in orders:
+        order_id = order.Order_ID
+        order_detail_id = order.Order_Detail_ID
+
+        # If Order_ID already exists in the dictionary, append order details
+        if order_id in orders_dict:
+            order_detail = {
+                'Order_Detail_ID': order_detail_id,
+                'Order_Quantity': order.Order_Quantity,
+                'Order_Size': order.Order_Size,
+                'Product_Name': order.Product_Name,
+                'Product_Price': order.Product_Price,
+            }
+
+            # If Order_Detail_ID already exists, append toppings
+            if order_detail_id in orders_dict[order_id]['Order_Details']:
+                orders_dict[order_id]['Order_Details'][order_detail_id]['Toppings'].append({
+                    'Topping_Addition_Name': order.Topping_Addition_Name,
+                    'Topping_Addition_Price': order.Topping_Addition_Price
+                })
+            else:
+                order_detail['Toppings'] = [{
+                    'Topping_Addition_Name': order.Topping_Addition_Name,
+                    'Topping_Addition_Price': order.Topping_Addition_Price
+                }]
+                orders_dict[order_id]['Order_Details'][order_detail_id] = order_detail
+        else:
+            order_dict = {
+                'Order_ID': order_id,
+                'Order_Date': order.Order_Date,
+                'Order_Status': order.Order_Status,
+                'User_ID': order.User_ID,
+                'Order_Details': {
+                    order_detail_id: {
+                        'Order_Detail_ID': order_detail_id,
+                        'Order_Quantity': order.Order_Quantity,
+                        'Order_Size': order.Order_Size,
+                        'Product_Name': order.Product_Name,
+                        'Product_Price': order.Product_Price,
+                        'Toppings': [{
+                            'Topping_Addition_Name': order.Topping_Addition_Name,
+                            'Topping_Addition_Price': order.Topping_Addition_Price
+                        }]
+                    }
+                }
+            }
+            orders_dict[order_id] = order_dict
+
+    order_list = list(orders_dict.values())
+
+    return jsonify({'data': order_list})
+@order_bp.route('/get_all_order_details_by_user', methods=['GET'])
+@jwt_required()
+def get_all_order_details_by_user():
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(User_Name=current_user).first()
+    if not user:
+        return jsonify(message="User not found"), 404
+    user_id = user.User_ID
+    
+    if not user_id:
+        return jsonify({'error': 'User ID is required'}), 400
+
+    orders = db.session.query(
+        Order.Order_ID,
+        Order.Order_Date,
+        Order.Order_Status,
+        Order.User_ID,
+        Order_Detail.Order_Detail_ID,
+        Order_Detail.idProduct,
+        Order_Detail.Order_Quantity,
+        Order_Detail.Order_Size,
+        product.Product_Price,
+        product.Product_Name,
+        Topping_Addition.Topping_Addition_Name,
+        Topping_Addition.Topping_Addition_Price
+    ).outerjoin(Order_Detail, Order.Order_ID == Order_Detail.Order_ID
+    ).outerjoin(product, Order_Detail.idProduct == product.idProduct
+    ).outerjoin(Topping_Addition, Order_Detail.Order_Detail_ID == Topping_Addition.Order_Detail_ID
+    ).filter(Order.User_ID == user_id).all()
 
     orders_dict = {}
 
