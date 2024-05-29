@@ -317,7 +317,8 @@ def delete_order(id):
 @order_bp.route('/delete_order_detail/<string:id>', methods=['DELETE'])
 def delete_order_detail(id):
     try:
-        topping_additions_exist = db.session.query(Topping_Addition.Order_Detail_ID).filter_by(Order_Detail_ID=id).first() is not None
+        topping_additions_exist = db.session.query(Topping_Addition.Order_Detail_ID)\
+            .filter_by(Order_Detail_ID=id).first() is not None
         order_detail = Order_Detail.query.get_or_404(id)
  
         if topping_additions_exist:
