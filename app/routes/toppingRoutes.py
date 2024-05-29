@@ -23,7 +23,7 @@ def add_topping():
                 new_topping = Topping(Topping_Name=name,Topping_Price=price)
                 db.session.add(new_topping)
                 db.session.commit()
-                return jsonify({'data':new_topping}), 200  # Return with HTTP status 201 for created
+                return jsonify("add topping successed"), 200  # Return with HTTP status 201 for created
             except:
                 return {
                     'Error': 'ERR',

@@ -24,11 +24,10 @@ def add_typeProduct():
                 new_typeProduct = typeproduct(TypeProduct_Name=name, TypeProduct_Img=image, Menu_ID=menu_id)
                 db.session.add(new_typeProduct)
                 db.session.commit()
-                return jsonify(new_typeProduct), 200  # Return with HTTP status 201 for created
-            except:
-                return {
-                    'Error': 'ERR',
-                },404
+                return jsonify("Add typeproduct successed"),200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'Error': 'ERR1', 'message': str(e)}), 500
         else:
             return {
                     'message': "Trùng tên hoặc link ảnh, hoặc ko tồn tại trong Menu",
@@ -93,9 +92,7 @@ def update_typeProduct(id):
             menu_id = data.get('Menu_ID')
             if name and image and menu_id:
                 check_menu_id = db.session.query(Menu.Menu_ID).filter_by(Menu_ID=menu_id).first() is not None
-                check_name = db.session.query(typeproduct.TypeProduct_Name).filter_by(TypeProduct_Name=name).first() is None
-                check_image = db.session.query(typeproduct.TypeProduct_Img).filter_by(TypeProduct_Img=image).first() is None
-                if check_name and check_image and check_menu_id:
+                if check_menu_id:
                     typeProduct_update.TypeProduct_Name = name
                     typeProduct_update.TypeProduct_Img = image
                     typeProduct_update.Menu_ID = menu_id
