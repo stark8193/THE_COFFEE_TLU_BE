@@ -24,8 +24,6 @@ def add_product():
         check_image = db.session.query(product.Product_Image).filter_by(Product_Image=image).first() is None
 
         if check_type_product_id and check_name and check_image:
-            print('check_menu_id:',check_type_product_id)
-            print('check_name:',check_name)
             try:
                 print(data)
                 new_product = product(Product_Name=name, Product_Image=image,Product_Price=price
@@ -33,7 +31,7 @@ def add_product():
                                         , TypeProduct_ID =type_product_id)
                 db.session.add(new_product)
                 db.session.commit()
-                return product_schema.jsonify(new_product), 200  # Return with HTTP status 201 for created
+                return jsonify({"data":{"idProduct":new_product.idProduct}}), 200  # Return with HTTP status 201 for created
             except:
                 return {
                     'Error': 'ERR',
@@ -54,9 +52,19 @@ def add_product():
 @product_bp.route('/product', methods=['GET'])
 def get_products():
     try:
-        all_products = product.query.all()
-        result = products_schema.dump(all_products)
-        return jsonify({"data":result}), 200
+        products = product.query.join(typeproduct).all()
+        product_list = []
+        for productItem in products:
+            product_list.append({
+                'idProduct': productItem.idProduct,
+                'Product_Name': productItem.Product_Name,
+                'Product_Image': productItem.Product_Image,
+                'Product_Price': productItem.Product_Price,
+                'Product_Description': productItem.Product_Description,
+                'TypeProduct_ID': productItem.TypeProduct_ID,
+                'TypeProduct_Name': productItem.type_product.TypeProduct_Name
+            })
+        return jsonify({"data":product_list})
     except:
         return {
             'Error': 'ERR',
@@ -160,6 +168,6 @@ def get_products_by_type(type_id):
             'Product_Image': productItem.Product_Image,
             'Product_Price': productItem.Product_Price,
             'Product_Description': productItem.Product_Description,
-            'TypeProduct_ID': productItem.TypeProduct_ID
+            'TypeProduct_ID': productItem.TypeProduct_ID,
         })
     return jsonify({"data":product_list})

@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify, request
 from app.models import news,typenews
 from app.schemas import NewsSchema
+from datetime import datetime
 from app import db
+import random
 
 news_bp = Blueprint('news_bp', __name__)
 
@@ -11,24 +13,22 @@ newses_schema = NewsSchema(many=True)
 @news_bp.route('/news', methods=['POST'])
 def add_news():
     data = request.get_json()
-    id = data.get("News_ID")
     title = data.get('News_Title')
     image = data.get('News_Image')
     description = data.get('News_Description')
     content = data.get('News_Content')
-    time = data.get('News_Time')
     typenews_id = data.get('TypeNews_ID')
+    now = datetime.now()
 
-    check_typenews_id = db.session.query(typenews.TypeNews_ID).filter_by(TypeNews_ID=typenews_id).first() is not None
     check_title = db.session.query(news.News_Title).filter_by(News_Title = title).first() is None
     check_image = db.session.query(news.News_Image).filter_by(News_Image = image).first() is None
 
-    if check_typenews_id and check_title and check_image:
+    if check_title and check_image:
 
-        new_news = news(News_ID = id ,News_Title=title, News_Image=image, News_Description = description, News_Content = content , News_Time=time, TypeNews_ID=typenews_id)
+        new_news = news(News_ID=round(random.uniform(10, 100), 2),News_Title=title, News_Image=image, News_Description = description, News_Content = content , News_Time= now.strftime("%d-%m-%Y"), TypeNews_ID=typenews_id)
         db.session.add(new_news)
         db.session.commit()
-        return news_schema.jsonify(new_news), 200  # Return with HTTP status 201 for created
+        return jsonify({"data": {"News_ID": new_news.News_ID}}), 200  # Return with HTTP status 201 for created
     else:
         return {
                 'message': "Trùng tên hoặc link ảnh, hoặc ko tồn tại trong TypeProduct",

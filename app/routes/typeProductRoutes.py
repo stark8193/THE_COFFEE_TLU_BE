@@ -24,7 +24,7 @@ def add_typeProduct():
                 new_typeProduct = typeproduct(TypeProduct_Name=name, TypeProduct_Img=image, Menu_ID=menu_id)
                 db.session.add(new_typeProduct)
                 db.session.commit()
-                return jsonify("Add typeproduct successed"),200
+                return jsonify({"data":{"TypeProduct_ID": new_typeProduct.TypeProduct_ID}}),200
             except Exception as e:
                 db.session.rollback()
                 return jsonify({'Error': 'ERR1', 'message': str(e)}), 500

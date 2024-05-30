@@ -8,7 +8,7 @@ import os
 
 # Cấu hình thời gian hết hạn của JWT
 ACCESS_EXPIRES = timedelta(hours=24)
-UPLOAD_FOLDER = 'C:\\Users\\Admin\\OneDrive\\Documents\\PYTHON\\CUOI_KY\\flask-coffee-tlu\\uploads'
+UPLOAD_FOLDER = 'D:\\flask\\uploads'    
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 

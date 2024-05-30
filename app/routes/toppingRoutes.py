@@ -18,12 +18,11 @@ def add_topping():
         check_name = db.session.query(Topping.Topping_Name).filter_by(Topping_Name=name).first() is None
 
         if check_name:
-            print('check_name:',check_name)
             try:
                 new_topping = Topping(Topping_Name=name,Topping_Price=price)
                 db.session.add(new_topping)
                 db.session.commit()
-                return jsonify("add topping successed"), 200  # Return with HTTP status 201 for created
+                return jsonify({"data":{"Topping_ID":new_topping.Topping_ID}}), 200  # Return with HTTP status 201 for created
             except:
                 return {
                     'Error': 'ERR',

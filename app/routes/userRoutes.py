@@ -39,12 +39,12 @@ def register():
 
     return user_schema.jsonify(new_user), 201
 
-@auth_bp.route('/getAll', methods=['GET'])
+@auth_bp.route('/getAllUser', methods=['GET'])
 def get_users():
     try:
         all_user = User.query.all()
         result = users_schema.dump(all_user)
-        return jsonify(result), 200
+        return jsonify({"data":result}), 200
     except:
         return {
             'Error': 'ERR',
